@@ -1,19 +1,48 @@
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Package, ShoppingCart, Zap, ChevronLeft, Menu, Home, Bell, Settings, Truck } from "lucide-react";
-import { useState } from "react";
+import { LayoutDashboard, Package, ShoppingCart, Zap, ChevronLeft, Menu, Home, Bell, Settings, Truck, Users, LogOut, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "لوحة التحكم", href: "/admin" },
   { icon: Package, label: "المنتجات", href: "/admin/products" },
   { icon: ShoppingCart, label: "الطلبات", href: "/admin/orders" },
+  { icon: Users, label: "المؤكدون", href: "/admin/confirmateurs" },
   { icon: Truck, label: "أسعار التوصيل", href: "/admin/delivery" },
   { icon: Settings, label: "إعدادات البيكسل", href: "/admin/settings" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, loading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/admin/login");
+    } else if (!loading && user && user.role !== "admin") {
+      navigate("/confirmateur/orders");
+    }
+  }, [user, loading]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/admin/login");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-3" />
+          <p className="text-gray-400">جاري التحقق...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== "admin") return null;
 
   return (
     <div className="min-h-screen bg-gray-950 flex" dir="rtl">
@@ -46,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-4">
+        <nav className="flex-1 p-4 overflow-y-auto">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <motion.div
@@ -61,13 +90,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800 space-y-1">
           <Link href="/">
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white cursor-pointer transition-all">
               <Home className="w-5 h-5" />
               <span className="font-medium">العودة للمتجر</span>
             </div>
           </Link>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 cursor-pointer transition-all">
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">تسجيل الخروج</span>
+          </button>
         </div>
       </motion.aside>
 
@@ -102,12 +135,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="p-4 border-t border-gray-800">
+          <div className="flex items-center gap-3 px-4 py-2 mb-2">
+            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+              {user?.name?.charAt(0) || "أ"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-bold truncate">{user?.name}</p>
+              <p className="text-gray-500 text-xs truncate">@{user?.username}</p>
+            </div>
+          </div>
           <Link href="/">
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white cursor-pointer transition-all" data-testid="nav-back-to-store">
               <Home className="w-5 h-5" />
               <span className="font-medium">العودة للمتجر</span>
             </div>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 cursor-pointer transition-all"
+            data-testid="button-admin-logout"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">تسجيل الخروج</span>
+          </button>
         </div>
       </div>
 
@@ -132,7 +182,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full" />
             </button>
             <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
-              أ
+              {user?.name?.charAt(0) || "أ"}
             </div>
           </div>
         </header>

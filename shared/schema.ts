@@ -6,6 +6,9 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role").notNull().default("confirmateur"),
+  name: text("name").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const categories = pgTable("categories", {
@@ -54,6 +57,8 @@ export const orders = pgTable("orders", {
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
   source: text("source").default("product"),
+  assignedTo: text("assigned_to"),
+  confirmateurName: text("confirmateur_name"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -61,7 +66,7 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true,
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 
-export type InsertUser = { username: string; password: string };
+export type InsertUser = { username: string; password: string; role: string; name: string };
 export type User = typeof users.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;

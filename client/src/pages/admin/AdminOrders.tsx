@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Phone, MapPin, Home, Building2 } from "lucide-react";
+import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Phone, MapPin, Home, Building2, UserCheck, ChevronDown } from "lucide-react";
 import { Order } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,13 +17,17 @@ const statusConfig: Record<string, { label: string; color: string; icon: any; bg
 
 const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
+type Confirmateur = { id: string; username: string; name: string };
+
 export default function AdminOrders() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({ queryKey: ["/api/orders"] });
+  const { data: confirmateurs = [] } = useQuery<Confirmateur[]>({ queryKey: ["/api/confirmateurs"] });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -37,6 +41,21 @@ export default function AdminOrders() {
       toast({ title: "تم تحديث حالة الطلب ✓" });
     },
     onError: () => toast({ title: "خطأ في التحديث", variant: "destructive" }),
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: async ({ orderId, confirmateurId }: { orderId: string; confirmateurId: string }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${orderId}/assign`, { confirmateurId });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      return res.json();
+    },
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      if (selectedOrder?.id === updated.id) setSelectedOrder(updated);
+      setAssigningOrderId(null);
+      toast({ title: `تم إسناد الطلب إلى ${updated.confirmateurName} ✓` });
+    },
+    onError: (e: any) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
   });
 
   let filtered = orders;
@@ -112,7 +131,7 @@ export default function AdminOrders() {
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden md:table-cell">المنتج</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">الإجمالي</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">الحالة</th>
-                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden lg:table-cell">المصدر</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden lg:table-cell">المؤكد</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">إجراء</th>
                 </tr>
               </thead>
@@ -121,7 +140,7 @@ export default function AdminOrders() {
                   {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i} className="border-b border-gray-800/50">
-                        {Array.from({ length: 7 }).map((_, j) => (
+                        {Array.from({ length: 8 }).map((_, j) => (
                           <td key={j} className="px-6 py-4">
                             <div className="h-4 bg-gray-800 rounded animate-pulse" />
                           </td>
@@ -132,6 +151,7 @@ export default function AdminOrders() {
                     filtered.map((order) => {
                       const cfg = statusConfig[order.status] || statusConfig["pending"];
                       const StatusIcon = cfg.icon;
+                      const isAssigning = assigningOrderId === order.id;
                       return (
                         <motion.tr
                           key={order.id}
@@ -170,12 +190,42 @@ export default function AdminOrders() {
                               {cfg.label}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-gray-400 text-xs hidden lg:table-cell">
-                            {order.source === "landing" ? (
-                              <span className="px-2 py-1 bg-fuchsia-500/20 text-fuchsia-400 rounded-lg border border-fuchsia-500/30">Landing</span>
-                            ) : (
-                              <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">منتج</span>
-                            )}
+                          <td className="px-6 py-4 hidden lg:table-cell">
+                            <div className="relative">
+                              {isAssigning ? (
+                                <select
+                                  autoFocus
+                                  defaultValue=""
+                                  onBlur={() => setAssigningOrderId(null)}
+                                  onChange={e => {
+                                    if (e.target.value) {
+                                      assignMutation.mutate({ orderId: order.id, confirmateurId: e.target.value });
+                                    }
+                                  }}
+                                  className="bg-gray-800 border border-violet-500 text-white text-xs px-2 py-1.5 rounded-lg focus:outline-none w-36"
+                                  data-testid={`select-assign-confirmateur-${order.id}`}
+                                >
+                                  <option value="">اختر مؤكداً</option>
+                                  {confirmateurs.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <button
+                                  onClick={() => setAssigningOrderId(order.id)}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                    order.confirmateurName
+                                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                      : "bg-gray-800 border-gray-700 text-gray-400 hover:border-violet-500 hover:text-violet-400"
+                                  }`}
+                                  data-testid={`button-assign-order-${order.id}`}
+                                >
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                  {order.confirmateurName || "إسناد"}
+                                  <ChevronDown className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <button
@@ -257,6 +307,50 @@ export default function AdminOrders() {
                         <div className="text-white text-sm font-medium break-words">{info.value}</div>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="mb-5">
+                    <div className="text-gray-400 text-sm font-medium mb-3 flex items-center gap-2">
+                      <UserCheck className="w-4 h-4 text-violet-400" />
+                      إسناد إلى مؤكد
+                    </div>
+                    {selectedOrder.confirmateurName ? (
+                      <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-2">
+                        <div>
+                          <p className="text-emerald-400 font-bold text-sm">{selectedOrder.confirmateurName}</p>
+                          <p className="text-gray-500 text-xs">مُعيَّن حالياً</p>
+                        </div>
+                        <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-600 text-xs mb-2">لم يُسنَد لأي مؤكد بعد</p>
+                    )}
+                    {confirmateurs.length === 0 ? (
+                      <p className="text-gray-600 text-xs">لا يوجد مؤكدون. أنشئ حسابات من صفحة المؤكدين.</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {confirmateurs.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => assignMutation.mutate({ orderId: selectedOrder.id, confirmateurId: c.id })}
+                            disabled={assignMutation.isPending || selectedOrder.assignedTo === c.id}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                              selectedOrder.assignedTo === c.id
+                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                : "bg-gray-800 text-gray-400 border-gray-700 hover:border-violet-500 hover:text-violet-400"
+                            }`}
+                            data-testid={`button-assign-to-${c.id}`}
+                          >
+                            <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-black text-xs">
+                              {c.name.charAt(0)}
+                            </div>
+                            <span className="truncate">{c.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {selectedOrder.notes && (

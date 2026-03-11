@@ -1,23 +1,31 @@
 import { type User, type InsertUser, type Product, type InsertProduct, type Order, type InsertOrder, type Category, type InsertCategory, DEFAULT_DELIVERY_PRICES } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
+
+export function hashPassword(password: string): string {
+  return createHash("sha256").update(password + "nova_store_salt_2026").digest("hex");
+}
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  getConfirmateurs(): Promise<User[]>;
   getProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   getFeaturedProducts(): Promise<Product[]>;
-  getProductsByCategory(category: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   getOrders(): Promise<Order[]>;
+  getOrdersByConfirmateur(confirmateurId: string): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  assignOrder(id: string, confirmateurId: string, confirmateurName: string): Promise<Order | undefined>;
   getSettings(): Promise<Record<string, string>>;
   updateSettings(settings: Record<string, string>): Promise<Record<string, string>>;
 }
@@ -37,6 +45,16 @@ export class MemStorage implements IStorage {
     this.settings = {
       deliveryPrices: JSON.stringify(DEFAULT_DELIVERY_PRICES),
     };
+
+    const adminUser: User = {
+      id: "user-admin",
+      username: "admin",
+      password: hashPassword("admin2026"),
+      role: "admin",
+      name: "المدير",
+      createdAt: new Date(),
+    };
+    this.users.set(adminUser.id, adminUser);
 
     const cats: Category[] = [
       { id: "cat-1", name: "إلكترونيات", slug: "electronics", icon: "Cpu", color: "#6366f1", description: "أحدث الأجهزة الإلكترونية" },
@@ -63,26 +81,44 @@ export class MemStorage implements IStorage {
     prods.forEach(p => this.products.set(p.id, p));
 
     const sampleOrders: Order[] = [
-      { id: "ord-1", customerName: "أحمد بلقاسم", customerPhone: "0555123456", wilaya: "الجزائر", deliveryType: "home", deliveryPrice: "400", productId: "p-1", productName: "iPhone 15 Pro Max", productImage: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&q=80", quantity: 1, price: "159000", total: "159400", status: "delivered", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 3) },
-      { id: "ord-2", customerName: "سارة بوزيدي", customerPhone: "0661234567", wilaya: "وهران", deliveryType: "desk", deliveryPrice: "450", productId: "p-7", productName: "كريم مرطب فاخر", productImage: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80", quantity: 2, price: "4500", total: "9450", status: "processing", notes: "التوصيل صباحاً", source: "landing", createdAt: new Date(Date.now() - 86400000) },
-      { id: "ord-3", customerName: "عمر حمزاوي", customerPhone: "0770111222", wilaya: "قسنطينة", deliveryType: "home", deliveryPrice: "750", productId: "p-8", productName: "حذاء أديداس Ultra Boost", productImage: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80", quantity: 1, price: "22000", total: "22750", status: "shipped", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 2) },
+      { id: "ord-1", customerName: "أحمد بلقاسم", customerPhone: "0555123456", wilaya: "الجزائر", deliveryType: "home", deliveryPrice: "400", productId: "p-1", productName: "iPhone 15 Pro Max", productImage: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&q=80", quantity: 1, price: "159000", total: "159400", status: "delivered", notes: null, source: "product", assignedTo: null, confirmateurName: null, createdAt: new Date(Date.now() - 86400000 * 3) },
+      { id: "ord-2", customerName: "سارة بوزيدي", customerPhone: "0661234567", wilaya: "وهران", deliveryType: "desk", deliveryPrice: "450", productId: "p-7", productName: "كريم مرطب فاخر", productImage: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80", quantity: 2, price: "4500", total: "9450", status: "processing", notes: "التوصيل صباحاً", source: "landing", assignedTo: null, confirmateurName: null, createdAt: new Date(Date.now() - 86400000) },
+      { id: "ord-3", customerName: "عمر حمزاوي", customerPhone: "0770111222", wilaya: "قسنطينة", deliveryType: "home", deliveryPrice: "750", productId: "p-8", productName: "حذاء أديداس Ultra Boost", productImage: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80", quantity: 1, price: "22000", total: "22750", status: "shipped", notes: null, source: "product", assignedTo: null, confirmateurName: null, createdAt: new Date(Date.now() - 86400000 * 2) },
     ];
     sampleOrders.forEach(o => this.orders.set(o.id, o));
   }
 
-  async getUser(id: string) { return this.users.get(id); }
+  async getUserById(id: string) { return this.users.get(id); }
   async getUserByUsername(username: string) { return Array.from(this.users.values()).find(u => u.username === username); }
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
+
+  async createUser(data: InsertUser): Promise<User> {
+    const id = `user-${randomUUID()}`;
+    const user: User = { ...data, id, createdAt: new Date() };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
+    const existing = this.users.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...data };
+    this.users.set(id, updated);
+    return updated;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    if (id === "user-admin") return false;
+    return this.users.delete(id);
+  }
+
+  async getConfirmateurs(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(u => u.role === "confirmateur");
   }
 
   async getProducts() { return Array.from(this.products.values()).sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()); }
   async getProduct(id: string) { return this.products.get(id); }
   async getFeaturedProducts() { return Array.from(this.products.values()).filter(p => p.featured); }
-  async getProductsByCategory(category: string) { return Array.from(this.products.values()).filter(p => p.category === category); }
+
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = randomUUID();
     const p: Product = {
@@ -98,6 +134,7 @@ export class MemStorage implements IStorage {
     this.products.set(id, p);
     return p;
   }
+
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
     const existing = this.products.get(id);
     if (!existing) return undefined;
@@ -105,6 +142,7 @@ export class MemStorage implements IStorage {
     this.products.set(id, updated);
     return updated;
   }
+
   async deleteProduct(id: string): Promise<boolean> { return this.products.delete(id); }
 
   async getCategories() { return Array.from(this.categories.values()); }
@@ -116,7 +154,13 @@ export class MemStorage implements IStorage {
   }
 
   async getOrders() { return Array.from(this.orders.values()).sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()); }
+  async getOrdersByConfirmateur(confirmateurId: string) {
+    return Array.from(this.orders.values())
+      .filter(o => o.assignedTo === confirmateurId)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
   async getOrder(id: string) { return this.orders.get(id); }
+
   async createOrder(order: InsertOrder): Promise<Order> {
     const id = `ord-${randomUUID()}`;
     const o: Order = {
@@ -128,14 +172,25 @@ export class MemStorage implements IStorage {
       quantity: order.quantity ?? 1,
       deliveryType: order.deliveryType ?? "home",
       deliveryPrice: order.deliveryPrice ?? "0",
+      assignedTo: order.assignedTo ?? null,
+      confirmateurName: order.confirmateurName ?? null,
     };
     this.orders.set(id, o);
     return o;
   }
+
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     const existing = this.orders.get(id);
     if (!existing) return undefined;
     const updated = { ...existing, status };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async assignOrder(id: string, confirmateurId: string, confirmateurName: string): Promise<Order | undefined> {
+    const existing = this.orders.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, assignedTo: confirmateurId, confirmateurName };
     this.orders.set(id, updated);
     return updated;
   }
