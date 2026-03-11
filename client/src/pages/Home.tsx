@@ -162,9 +162,9 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { icon: Truck, title: "شحن مجاني", desc: "على الطلبات فوق 299 ر.س", color: "from-violet-500 to-violet-600" },
-                { icon: Shield, title: "دفع آمن 100%", desc: "بروتوكولات أمان متطورة", color: "from-emerald-500 to-emerald-600" },
-                { icon: RefreshCw, title: "إرجاع مجاني", desc: "خلال 30 يوماً بلا أسئلة", color: "from-orange-500 to-orange-600" },
+                { icon: Truck, title: "توصيل لكل الجزائر", desc: "من عنابة إلى تمنراست", color: "from-violet-500 to-violet-600" },
+                { icon: Shield, title: "دفع عند الاستلام", desc: "لا خطر، لا قلق", color: "from-emerald-500 to-emerald-600" },
+                { icon: RefreshCw, title: "إرجاع مضمون", desc: "خلال 7 أيام بلا أسئلة", color: "from-orange-500 to-orange-600" },
                 { icon: Star, title: "ضمان الجودة", desc: "منتجات أصلية مضمونة", color: "from-amber-500 to-amber-600" },
               ].map((feat, i) => (
                 <motion.div
@@ -305,9 +305,9 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { name: "أحمد المالكي", avatar: "أ", rating: 5, text: "تجربة تسوق رائعة! الشحن سريع جداً والمنتجات مطابقة للوصف بالكامل. سأعود للتسوق مرة أخرى بالتأكيد.", city: "الرياض" },
-                { name: "سارة العتيبي", avatar: "س", rating: 5, text: "المنتجات أصلية 100% وجودتها ممتازة. خدمة العملاء تعاملت مع استفساري بسرعة واحترافية عالية.", city: "جدة" },
-                { name: "محمد الغامدي", avatar: "م", rating: 4, text: "أسعار تنافسية جداً مقارنة بالمتاجر الأخرى. الموقع سهل الاستخدام والدفع آمن ومريح.", city: "الدمام" },
+                { name: "أحمد بلقاسم", avatar: "أ", rating: 5, text: "تجربة تسوق رائعة! التوصيل سريع والمنتجات مطابقة للوصف. الدفع عند الاستلام خلاني نثق أكثر.", city: "الجزائر" },
+                { name: "سارة بوزيدي", avatar: "س", rating: 5, text: "المنتجات أصلية 100% وجودتها ممتازة. وصلتني في يومين فقط لوهران. أنصح بيه الجميع!", city: "وهران" },
+                { name: "محمد حمزاوي", avatar: "م", rating: 5, text: "أسعار رائعة مقارنة بالسوق. سهل الطلب ولا توجد مشاكل. سأشتري مرة أخرى بالتأكيد.", city: "قسنطينة" },
               ].map((review, i) => (
                 <motion.div
                   key={i}

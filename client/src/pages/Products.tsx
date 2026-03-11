@@ -36,7 +36,7 @@ export default function Products() {
   const [activeCategory, setActiveCategory] = useState(params.get("category") || "all");
   const [sort, setSort] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -121,15 +121,15 @@ export default function Products() {
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <h3 className="font-bold text-gray-900 mb-4">نطاق السعر</h3>
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                  <span>{priceRange[0].toLocaleString("ar-SA")} ر.س</span>
+                  <span>{priceRange[0].toLocaleString("ar-DZ")} دج</span>
                   <span>-</span>
-                  <span>{priceRange[1].toLocaleString("ar-SA")} ر.س</span>
+                  <span>{priceRange[1].toLocaleString("ar-DZ")} دج</span>
                 </div>
                 <input
                   type="range"
                   min={0}
-                  max={10000}
-                  step={100}
+                  max={500000}
+                  step={1000}
                   value={priceRange[1]}
                   onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
                   className="w-full accent-violet-600"

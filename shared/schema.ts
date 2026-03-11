@@ -32,23 +32,26 @@ export const products = pgTable("products", {
   featured: boolean("featured").notNull().default(false),
   badge: text("badge"),
   tags: text("tags").array(),
+  landingEnabled: boolean("landing_enabled").notNull().default(false),
+  landingHook: text("landing_hook"),
+  landingBenefits: text("landing_benefits").array(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey(),
   customerName: text("customer_name").notNull(),
-  customerEmail: text("customer_email").notNull(),
-  customerPhone: text("customer_phone"),
-  customerAddress: text("customer_address").notNull(),
-  customerCity: text("customer_city").notNull(),
-  items: jsonb("items").notNull(),
-  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
-  shipping: numeric("shipping", { precision: 10, scale: 2 }).notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  wilaya: text("wilaya").notNull(),
+  productId: text("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  productImage: text("product_image"),
+  quantity: integer("quantity").notNull().default(1),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
-  paymentMethod: text("payment_method").notNull().default("cod"),
   notes: text("notes"),
+  source: text("source").default("product"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -65,10 +68,14 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
-export type CartItem = {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-};
+export const ALGERIAN_WILAYAS = [
+  "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة",
+  "بشار", "البليدة", "البويرة", "تمنراست", "تبسة", "تلمسان", "تيارت",
+  "تيزي وزو", "الجزائر", "الجلفة", "جيجل", "سطيف", "سعيدة", "سكيكدة",
+  "سيدي بلعباس", "عنابة", "قالمة", "قسنطينة", "المدية", "مستغانم",
+  "المسيلة", "معسكر", "ورقلة", "وهران", "البيض", "إليزي", "برج بوعريريج",
+  "بومرداس", "الطارف", "تندوف", "تيسمسيلت", "الوادي", "خنشلة", "سوق أهراس",
+  "تيبازة", "ميلة", "عين الدفلى", "النعامة", "عين تموشنت", "غرداية", "غليزان",
+  "تيميمون", "برج باجي مختار", "أولاد جلال", "بني عباس", "إن صالح",
+  "إن قزام", "تقرت", "جانت", "المغير", "المنيعة",
+];

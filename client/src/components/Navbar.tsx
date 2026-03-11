@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Search, Menu, X, Zap, Heart } from "lucide-react";
-import { useCart } from "@/context/CartContext";
-import { Button } from "@/components/ui/button";
+import { Search, Menu, X, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
 export default function Navbar() {
   const [location, navigate] = useLocation();
-  const { totalItems, setIsOpen } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -44,29 +40,22 @@ export default function Navbar() {
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/10 border-b border-violet-100"
-            : "bg-transparent"
+          scrolled ? "bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/10 border-b border-violet-100" : "bg-transparent"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             <div className="flex items-center gap-8">
               <Link href="/">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2 cursor-pointer">
                   <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
                     <Zap className="w-5 h-5 text-white" />
                   </div>
-                  <span className={`text-xl font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-transparent ${scrolled ? "" : "drop-shadow-sm"}`}>
+                  <span className={`text-xl font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-transparent`}>
                     نوفا
                   </span>
                 </motion.div>
               </Link>
-
               <div className="hidden lg:flex items-center gap-1">
                 {navLinks.map((link) => (
                   <Link key={link.href} href={link.href}>
@@ -75,9 +64,7 @@ export default function Navbar() {
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                         location === link.href
                           ? "bg-violet-100 text-violet-700"
-                          : scrolled
-                            ? "text-gray-600 hover:text-violet-700 hover:bg-violet-50"
-                            : "text-gray-700 hover:text-violet-700 hover:bg-white/20"
+                          : scrolled ? "text-gray-600 hover:text-violet-700 hover:bg-violet-50" : "text-gray-700 hover:text-violet-700 hover:bg-white/20"
                       }`}
                     >
                       {link.label}
@@ -97,29 +84,6 @@ export default function Navbar() {
               >
                 <Search className="w-5 h-5" />
               </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setIsOpen(true)}
-                className="relative p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30"
-                data-testid="button-cart"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                <AnimatePresence>
-                  {totalItems > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                    >
-                      {totalItems}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-
               <button
                 className={`lg:hidden p-2.5 rounded-xl transition-all ${scrolled ? "text-gray-600 hover:bg-violet-50" : "text-gray-700 hover:bg-white/20"}`}
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -142,19 +106,13 @@ export default function Navbar() {
               <div className="px-4 py-4 flex flex-col gap-2">
                 {navLinks.map((link) => (
                   <Link key={link.href} href={link.href}>
-                    <span
-                      onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-violet-50 hover:text-violet-700 font-medium cursor-pointer transition-all"
-                    >
+                    <span onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-violet-50 hover:text-violet-700 font-medium cursor-pointer transition-all">
                       {link.label}
                     </span>
                   </Link>
                 ))}
                 <Link href="/admin">
-                  <span
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-3 rounded-xl text-violet-600 hover:bg-violet-50 font-medium cursor-pointer transition-all"
-                  >
+                  <span onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl text-violet-600 hover:bg-violet-50 font-medium cursor-pointer transition-all">
                     لوحة الإدارة
                   </span>
                 </Link>

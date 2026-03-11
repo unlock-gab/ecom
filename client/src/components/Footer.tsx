@@ -81,15 +81,15 @@ export default function Footer() {
             <ul className="flex flex-col gap-4">
               <li className="flex items-center gap-3 text-sm text-gray-400">
                 <Phone className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                <span>920-000-123</span>
+                <span>0555 123 456</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-gray-400">
                 <Mail className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                <span>support@nova-store.sa</span>
+                <span>support@nova-store.dz</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
-                <span>الرياض، المملكة العربية السعودية</span>
+                <span>الجزائر العاصمة، الجزائر</span>
               </li>
             </ul>
           </div>
@@ -100,7 +100,7 @@ export default function Footer() {
             © 2026 متجر نوفا. جميع الحقوق محفوظة.
           </p>
           <p className="text-sm text-gray-500 flex items-center gap-1">
-            صُنع بـ <Heart className="w-4 h-4 text-red-500 fill-red-500" /> في المملكة العربية السعودية
+            صُنع بـ <Heart className="w-4 h-4 text-red-500 fill-red-500" /> في الجزائر
           </p>
         </div>
       </div>

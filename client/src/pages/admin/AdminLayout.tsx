@@ -8,6 +8,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "لوحة التحكم", href: "/admin" },
   { icon: Package, label: "المنتجات", href: "/admin/products" },
   { icon: ShoppingCart, label: "الطلبات", href: "/admin/orders" },
+  { icon: Settings, label: "إعدادات البيكسل", href: "/admin/settings" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

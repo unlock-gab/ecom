@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Package, ShoppingCart, TrendingUp, DollarSign, Clock, CheckCircle, Truck, BarChart3, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Package, ShoppingCart, TrendingUp, DollarSign, Clock, CheckCircle, Truck, ArrowUpRight, ArrowDownRight, Phone, MapPin } from "lucide-react";
 import { Product, Order } from "@shared/schema";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Link } from "wouter";
 import AdminLayout from "./AdminLayout";
 
@@ -73,12 +73,12 @@ export default function AdminDashboard() {
   ];
 
   const monthlyData = [
-    { month: "أكتوبر", revenue: 12400, orders: 8 },
-    { month: "نوفمبر", revenue: 18900, orders: 14 },
-    { month: "ديسمبر", revenue: 24300, orders: 21 },
-    { month: "يناير", revenue: 19800, orders: 16 },
-    { month: "فبراير", revenue: 28600, orders: 24 },
-    { month: "مارس", revenue: stats?.totalRevenue || 32000, orders: orders.length },
+    { month: "أكتوبر", revenue: 1240000, orders: 8 },
+    { month: "نوفمبر", revenue: 1890000, orders: 14 },
+    { month: "ديسمبر", revenue: 2430000, orders: 21 },
+    { month: "يناير", revenue: 1980000, orders: 16 },
+    { month: "فبراير", revenue: 2860000, orders: 24 },
+    { month: "مارس", revenue: stats?.totalRevenue || 3200000, orders: orders.length },
   ];
 
   return (
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="إجمالي الإيرادات"
-            value={`${(stats?.totalRevenue || 0).toLocaleString("ar-SA")} ر.س`}
+            value={`${(stats?.totalRevenue || 0).toLocaleString("ar-DZ")} دج`}
             icon={DollarSign}
             color="bg-violet-500/20 text-violet-400"
             trend={12}
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-2 bg-gray-900 rounded-2xl p-6 border border-gray-800"
           >
-            <h2 className="text-white font-bold text-lg mb-6">الإيرادات الشهرية</h2>
+            <h2 className="text-white font-bold text-lg mb-6">الإيرادات الشهرية (دج)</h2>
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={monthlyData}>
                 <defs>
@@ -137,10 +137,10 @@ export default function AdminDashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                 <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#9ca3af", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
                 <Tooltip
                   contentStyle={{ background: "#111827", border: "1px solid #374151", borderRadius: "12px", color: "#f9fafb" }}
-                  formatter={(val: any) => [`${Number(val).toLocaleString("ar-SA")} ر.س`, "الإيرادات"]}
+                  formatter={(val: any) => [`${Number(val).toLocaleString("ar-DZ")} دج`, "الإيرادات"]}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#7c3aed" strokeWidth={3} fill="url(#revGradient)" />
               </AreaChart>
@@ -198,32 +198,41 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-800">
-                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm">رقم الطلب</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm">العميل</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm hidden md:table-cell">الولاية</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm hidden md:table-cell">المنتج</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm">الإجمالي</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm">الحالة</th>
-                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm">التاريخ</th>
                 </tr>
               </thead>
               <tbody>
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors" data-testid={`order-row-${order.id}`}>
-                    <td className="px-6 py-4 text-gray-300 font-mono text-xs">{order.id.slice(0, 12)}...</td>
-                    <td className="px-6 py-4 text-white font-medium">{order.customerName}</td>
-                    <td className="px-6 py-4 text-violet-400 font-bold">{parseFloat(order.total as string).toLocaleString("ar-SA")} ر.س</td>
+                    <td className="px-6 py-4">
+                      <div className="text-white font-medium">{order.customerName}</div>
+                      <div className="text-gray-500 text-xs flex items-center gap-1"><Phone className="w-3 h-3" />{order.customerPhone}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-400 text-sm hidden md:table-cell">
+                      <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{order.wilaya}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-300 text-xs hidden md:table-cell line-clamp-1 max-w-[120px]">{order.productName}</td>
+                    <td className="px-6 py-4 text-violet-400 font-bold whitespace-nowrap">{parseFloat(order.total as string).toLocaleString("ar-DZ")} دج</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[order.status] || "bg-gray-100 text-gray-700"}`}>
                         {statusTranslations[order.status] || order.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-400 text-sm">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ar-SA") : "-"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {recentOrders.length === 0 && (
+            <div className="py-12 text-center text-gray-500">
+              <Package className="w-10 h-10 mx-auto mb-2 text-gray-700" />
+              لا توجد طلبات بعد
+            </div>
+          )}
         </motion.div>
       </div>
     </AdminLayout>

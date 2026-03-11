@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Filter } from "lucide-react";
+import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Phone, MapPin, ExternalLink } from "lucide-react";
 import { Order } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,7 @@ export default function AdminOrders() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       if (selectedOrder?.id === updated.id) setSelectedOrder(updated);
-      toast({ title: "تم تحديث حالة الطلب" });
+      toast({ title: "تم تحديث حالة الطلب ✓" });
     },
     onError: () => toast({ title: "خطأ في التحديث", variant: "destructive" }),
   });
@@ -44,10 +44,9 @@ export default function AdminOrders() {
   if (search) filtered = filtered.filter(o =>
     o.customerName.toLowerCase().includes(search.toLowerCase()) ||
     o.id.toLowerCase().includes(search.toLowerCase()) ||
-    o.customerEmail.toLowerCase().includes(search.toLowerCase())
+    o.customerPhone.includes(search) ||
+    o.wilaya.includes(search)
   );
-
-  const items = (selectedOrder?.items as any[]) || [];
 
   return (
     <AdminLayout>
@@ -63,7 +62,7 @@ export default function AdminOrders() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="ابحث بالاسم أو رقم الطلب..."
+              placeholder="ابحث بالاسم أو الهاتف أو الولاية..."
               className="w-full bg-gray-900 border border-gray-800 text-white placeholder-gray-500 pr-11 pl-4 py-3 rounded-xl focus:outline-none focus:border-violet-500"
               data-testid="input-order-search"
             />
@@ -109,64 +108,87 @@ export default function AdminOrders() {
                 <tr className="border-b border-gray-800">
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">رقم الطلب</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">العميل</th>
-                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden md:table-cell">المدينة</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden md:table-cell">الولاية</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden md:table-cell">المنتج</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">الإجمالي</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">الحالة</th>
-                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden lg:table-cell">التاريخ</th>
+                  <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap hidden lg:table-cell">المصدر</th>
                   <th className="text-right px-6 py-4 text-gray-400 font-medium text-sm whitespace-nowrap">إجراء</th>
                 </tr>
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {filtered.map((order) => {
-                    const cfg = statusConfig[order.status] || statusConfig["pending"];
-                    const StatusIcon = cfg.icon;
-                    return (
-                      <motion.tr
-                        key={order.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors"
-                        data-testid={`order-row-${order.id}`}
-                      >
-                        <td className="px-6 py-4 text-gray-300 font-mono text-xs whitespace-nowrap">
-                          {order.id.slice(0, 14)}...
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-white font-medium whitespace-nowrap">{order.customerName}</div>
-                          <div className="text-gray-500 text-xs">{order.customerEmail}</div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-400 hidden md:table-cell whitespace-nowrap">{order.customerCity}</td>
-                        <td className="px-6 py-4 text-violet-400 font-bold whitespace-nowrap">
-                          {parseFloat(order.total as string).toLocaleString("ar-SA")} ر.س
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.color} whitespace-nowrap`}>
-                            <StatusIcon className="w-3 h-3" />
-                            {cfg.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-400 text-sm hidden lg:table-cell whitespace-nowrap">
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ar-SA") : "-"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="p-2 bg-gray-800 hover:bg-violet-600/20 border border-gray-700 hover:border-violet-500 text-gray-400 hover:text-violet-400 rounded-xl transition-all"
-                            data-testid={`button-view-order-${order.id}`}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="border-b border-gray-800/50">
+                        {Array.from({ length: 7 }).map((_, j) => (
+                          <td key={j} className="px-6 py-4">
+                            <div className="h-4 bg-gray-800 rounded animate-pulse" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    filtered.map((order) => {
+                      const cfg = statusConfig[order.status] || statusConfig["pending"];
+                      const StatusIcon = cfg.icon;
+                      return (
+                        <motion.tr
+                          key={order.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors"
+                          data-testid={`order-row-${order.id}`}
+                        >
+                          <td className="px-6 py-4 text-gray-300 font-mono text-xs whitespace-nowrap">
+                            #{order.id.slice(-8)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-white font-medium whitespace-nowrap">{order.customerName}</div>
+                            <div className="text-gray-500 text-xs flex items-center gap-1"><Phone className="w-3 h-3" />{order.customerPhone}</div>
+                          </td>
+                          <td className="px-6 py-4 text-gray-400 hidden md:table-cell whitespace-nowrap">
+                            <div className="flex items-center gap-1"><MapPin className="w-3 h-3 text-gray-600" />{order.wilaya}</div>
+                          </td>
+                          <td className="px-6 py-4 hidden md:table-cell">
+                            <div className="text-gray-300 text-xs line-clamp-1 max-w-[140px]">{order.productName}</div>
+                            <div className="text-gray-500 text-xs">×{order.quantity}</div>
+                          </td>
+                          <td className="px-6 py-4 text-violet-400 font-bold whitespace-nowrap">
+                            {parseFloat(order.total as string).toLocaleString("ar-DZ")} دج
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${cfg.bg} ${cfg.color} whitespace-nowrap`}>
+                              <StatusIcon className="w-3 h-3" />
+                              {cfg.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-400 text-xs hidden lg:table-cell">
+                            {order.source === "landing" ? (
+                              <span className="px-2 py-1 bg-fuchsia-500/20 text-fuchsia-400 rounded-lg border border-fuchsia-500/30">Landing</span>
+                            ) : (
+                              <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">منتج</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="p-2 bg-gray-800 hover:bg-violet-600/20 border border-gray-700 hover:border-violet-500 text-gray-400 hover:text-violet-400 rounded-xl transition-all"
+                              data-testid={`button-view-order-${order.id}`}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })
+                  )}
                 </AnimatePresence>
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="py-16 text-center">
               <Package className="w-12 h-12 text-gray-700 mx-auto mb-3" />
               <p className="text-gray-500">لا توجد طلبات</p>
@@ -189,7 +211,7 @@ export default function AdminOrders() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed left-0 top-0 bottom-0 w-full max-w-lg bg-gray-900 border-r border-gray-800 z-50 overflow-y-auto"
+                className="fixed left-0 top-0 bottom-0 w-full max-w-md bg-gray-900 border-r border-gray-800 z-50 overflow-y-auto"
               >
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
@@ -202,49 +224,41 @@ export default function AdminOrders() {
                     </button>
                   </div>
 
-                  <div className="bg-gray-800 rounded-2xl p-4 mb-5">
-                    <div className="text-gray-400 text-xs mb-1">رقم الطلب</div>
-                    <div className="text-white font-mono text-sm break-all">{selectedOrder.id}</div>
+                  <div className="bg-gray-800 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                    {selectedOrder.productImage && (
+                      <img src={selectedOrder.productImage} alt={selectedOrder.productName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+                    )}
+                    <div>
+                      <div className="text-white font-bold text-sm">{selectedOrder.productName}</div>
+                      <div className="text-gray-400 text-xs mt-0.5">الكمية: {selectedOrder.quantity}</div>
+                      <div className="text-violet-400 font-black mt-1">{parseFloat(selectedOrder.total as string).toLocaleString("ar-DZ")} دج</div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-5">
                     {[
-                      { label: "العميل", value: selectedOrder.customerName },
-                      { label: "الهاتف", value: selectedOrder.customerPhone || "-" },
-                      { label: "البريد الإلكتروني", value: selectedOrder.customerEmail },
-                      { label: "المدينة", value: selectedOrder.customerCity },
-                      { label: "طريقة الدفع", value: selectedOrder.paymentMethod === "cod" ? "عند الاستلام" : "بطاقة" },
-                      { label: "الإجمالي", value: `${parseFloat(selectedOrder.total as string).toLocaleString("ar-SA")} ر.س` },
+                      { label: "العميل", value: selectedOrder.customerName, icon: "👤" },
+                      { label: "الهاتف", value: selectedOrder.customerPhone, icon: "📞" },
+                      { label: "الولاية", value: selectedOrder.wilaya, icon: "📍" },
+                      { label: "المصدر", value: selectedOrder.source === "landing" ? "Landing Page" : "صفحة المنتج", icon: "🔗" },
+                      { label: "رقم الطلب", value: `#${selectedOrder.id.slice(-8)}`, icon: "🔢" },
+                      { label: "التاريخ", value: selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString("ar-DZ") : "-", icon: "📅" },
                     ].map((info, i) => (
                       <div key={i} className="bg-gray-800 rounded-xl p-3">
-                        <div className="text-gray-500 text-xs mb-1">{info.label}</div>
+                        <div className="text-gray-500 text-xs mb-1">{info.icon} {info.label}</div>
                         <div className="text-white text-sm font-medium break-words">{info.value}</div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mb-5">
-                    <div className="text-gray-400 text-sm font-medium mb-3">العنوان</div>
-                    <div className="bg-gray-800 rounded-xl p-3 text-white text-sm">{selectedOrder.customerAddress}</div>
-                  </div>
-
-                  <div className="mb-5">
-                    <div className="text-gray-400 text-sm font-medium mb-3">المنتجات</div>
-                    <div className="flex flex-col gap-3">
-                      {items.map((item: any, i: number) => (
-                        <div key={i} className="flex gap-3 bg-gray-800 rounded-xl p-3">
-                          <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium line-clamp-2">{item.name}</p>
-                            <p className="text-gray-400 text-xs mt-1">الكمية: {item.quantity}</p>
-                            <p className="text-violet-400 text-sm font-bold">{(item.price * item.quantity).toLocaleString("ar-SA")} ر.س</p>
-                          </div>
-                        </div>
-                      ))}
+                  {selectedOrder.notes && (
+                    <div className="mb-5">
+                      <div className="text-gray-400 text-sm font-medium mb-2">ملاحظات</div>
+                      <div className="bg-gray-800 rounded-xl p-3 text-gray-300 text-sm">{selectedOrder.notes}</div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="mb-5">
+                  <div>
                     <div className="text-gray-400 text-sm font-medium mb-3">تحديث الحالة</div>
                     <div className="grid grid-cols-2 gap-2">
                       {statusOptions.map(s => {

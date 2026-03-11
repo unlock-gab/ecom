@@ -2,7 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertOrderSchema } from "@shared/schema";
-import { z } from "zod";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   app.get("/api/products", async (req, res) => {
@@ -86,14 +85,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const pendingOrders = orders.filter(o => o.status === "pending").length;
     const processingOrders = orders.filter(o => o.status === "processing").length;
     const deliveredOrders = orders.filter(o => o.status === "delivered").length;
-    res.json({
-      totalProducts: products.length,
-      totalOrders: orders.length,
-      totalRevenue,
-      pendingOrders,
-      processingOrders,
-      deliveredOrders,
-    });
+    res.json({ totalProducts: products.length, totalOrders: orders.length, totalRevenue, pendingOrders, processingOrders, deliveredOrders });
+  });
+
+  app.get("/api/settings", async (req, res) => {
+    const settings = await storage.getSettings();
+    res.json(settings);
+  });
+
+  app.patch("/api/settings", async (req, res) => {
+    const settings = await storage.updateSettings(req.body);
+    res.json(settings);
   });
 
   return httpServer;
