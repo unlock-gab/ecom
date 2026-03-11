@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Product, type InsertProduct, type Order, type InsertOrder, type Category, type InsertCategory } from "@shared/schema";
+import { type User, type InsertUser, type Product, type InsertProduct, type Order, type InsertOrder, type Category, type InsertCategory, DEFAULT_DELIVERY_PRICES } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -34,6 +34,10 @@ export class MemStorage implements IStorage {
   }
 
   private seed() {
+    this.settings = {
+      deliveryPrices: JSON.stringify(DEFAULT_DELIVERY_PRICES),
+    };
+
     const cats: Category[] = [
       { id: "cat-1", name: "إلكترونيات", slug: "electronics", icon: "Cpu", color: "#6366f1", description: "أحدث الأجهزة الإلكترونية" },
       { id: "cat-2", name: "ملابس", slug: "fashion", icon: "Shirt", color: "#ec4899", description: "أزياء عصرية وأنيقة" },
@@ -59,9 +63,9 @@ export class MemStorage implements IStorage {
     prods.forEach(p => this.products.set(p.id, p));
 
     const sampleOrders: Order[] = [
-      { id: "ord-1", customerName: "أحمد بلقاسم", customerPhone: "0555123456", wilaya: "الجزائر", productId: "p-1", productName: "iPhone 15 Pro Max", productImage: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&q=80", quantity: 1, price: "159000", total: "159000", status: "delivered", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 3) },
-      { id: "ord-2", customerName: "سارة بوزيدي", customerPhone: "0661234567", wilaya: "وهران", productId: "p-7", productName: "كريم مرطب فاخر", productImage: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80", quantity: 2, price: "4500", total: "9000", status: "processing", notes: "التوصيل صباحاً", source: "landing", createdAt: new Date(Date.now() - 86400000) },
-      { id: "ord-3", customerName: "عمر حمزاوي", customerPhone: "0770111222", wilaya: "قسنطينة", productId: "p-8", productName: "حذاء أديداس Ultra Boost", productImage: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80", quantity: 1, price: "22000", total: "22000", status: "shipped", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 2) },
+      { id: "ord-1", customerName: "أحمد بلقاسم", customerPhone: "0555123456", wilaya: "الجزائر", deliveryType: "home", deliveryPrice: "400", productId: "p-1", productName: "iPhone 15 Pro Max", productImage: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&q=80", quantity: 1, price: "159000", total: "159400", status: "delivered", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 3) },
+      { id: "ord-2", customerName: "سارة بوزيدي", customerPhone: "0661234567", wilaya: "وهران", deliveryType: "desk", deliveryPrice: "450", productId: "p-7", productName: "كريم مرطب فاخر", productImage: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80", quantity: 2, price: "4500", total: "9450", status: "processing", notes: "التوصيل صباحاً", source: "landing", createdAt: new Date(Date.now() - 86400000) },
+      { id: "ord-3", customerName: "عمر حمزاوي", customerPhone: "0770111222", wilaya: "قسنطينة", deliveryType: "home", deliveryPrice: "750", productId: "p-8", productName: "حذاء أديداس Ultra Boost", productImage: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80", quantity: 1, price: "22000", total: "22750", status: "shipped", notes: null, source: "product", createdAt: new Date(Date.now() - 86400000 * 2) },
     ];
     sampleOrders.forEach(o => this.orders.set(o.id, o));
   }
@@ -122,6 +126,8 @@ export class MemStorage implements IStorage {
       source: order.source ?? "product",
       productImage: order.productImage ?? null,
       quantity: order.quantity ?? 1,
+      deliveryType: order.deliveryType ?? "home",
+      deliveryPrice: order.deliveryPrice ?? "0",
     };
     this.orders.set(id, o);
     return o;

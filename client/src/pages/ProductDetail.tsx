@@ -1,40 +1,17 @@
-import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronLeft, CheckCircle, Loader2, Phone, User, MapPin, Shield, Truck, RefreshCw, Share2, ExternalLink } from "lucide-react";
-import { Product, ALGERIAN_WILAYAS } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
+import { useRoute } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { Star, ChevronLeft, Shield, Truck, RefreshCw, ExternalLink } from "lucide-react";
+import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import ProductCard from "@/components/ProductCard";
+import OrderForm from "@/components/OrderForm";
 import { Link } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-
-const orderSchema = z.object({
-  customerName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
-  customerPhone: z.string().min(9, "رقم الهاتف غير صحيح").max(13),
-  wilaya: z.string().min(1, "اختر الولاية"),
-  quantity: z.number().min(1).max(20),
-  notes: z.string().optional(),
-});
-
-type OrderForm = z.infer<typeof orderSchema>;
 
 export default function ProductDetail() {
   const [, params] = useRoute("/products/:id");
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", params?.id],
@@ -42,41 +19,6 @@ export default function ProductDetail() {
   });
   const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const related = allProducts.filter(p => p.category === product?.category && p.id !== product?.id).slice(0, 4);
-
-  const form = useForm<OrderForm>({
-    resolver: zodResolver(orderSchema),
-    defaultValues: { customerName: "", customerPhone: "", wilaya: "", quantity: 1, notes: "" },
-  });
-
-  const quantity = form.watch("quantity");
-
-  const orderMutation = useMutation({
-    mutationFn: async (data: OrderForm) => {
-      const res = await apiRequest("POST", "/api/orders", {
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        wilaya: data.wilaya,
-        productId: product!.id,
-        productName: product!.name,
-        productImage: product!.image,
-        quantity: data.quantity,
-        price: String(product!.price),
-        total: String(parseFloat(product!.price as string) * data.quantity),
-        status: "pending",
-        notes: data.notes || null,
-        source: "product",
-      });
-      return res.json();
-    },
-    onSuccess: (order) => {
-      setOrderSuccess(true);
-      setOrderId(order.id);
-      form.reset();
-    },
-    onError: () => {
-      toast({ title: "خطأ", description: "حدث خطأ، يرجى المحاولة مجدداً", variant: "destructive" });
-    },
-  });
 
   if (isLoading) {
     return (
@@ -110,8 +52,6 @@ export default function ProductDetail() {
   const discount = product.originalPrice
     ? Math.round((1 - parseFloat(product.price as string) / parseFloat(product.originalPrice as string)) * 100)
     : 0;
-
-  const totalPrice = parseFloat(product.price as string) * quantity;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,95 +118,7 @@ export default function ProductDetail() {
               ))}
             </div>
 
-            <AnimatePresence mode="wait">
-              {orderSuccess ? (
-                <motion.div key="success" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                  <h3 className="text-xl font-black text-emerald-700 mb-2">تم تأكيد طلبك! 🎉</h3>
-                  <p className="text-emerald-600 text-sm mb-4">سيتصل بك فريقنا قريباً لتأكيد التوصيل</p>
-                  <p className="text-xs text-emerald-500 mb-4">رقم الطلب: {orderId}</p>
-                  <Button onClick={() => setOrderSuccess(false)} variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 rounded-xl">
-                    طلب جديد
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white border-2 border-violet-100 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-gray-900">اطلب الآن - الدفع عند الاستلام</h3>
-                      <p className="text-xs text-gray-400">أدخل بياناتك ونتصل بك للتأكيد</p>
-                    </div>
-                  </div>
-
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(data => orderMutation.mutate(data))} className="flex flex-col gap-4">
-                      <FormField control={form.control} name="customerName" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-semibold flex items-center gap-1.5"><User className="w-4 h-4" /> الاسم الكامل</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="أدخل اسمك الكامل" className="rounded-xl border-gray-200 focus:border-violet-400 h-12" data-testid="input-order-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-
-                      <FormField control={form.control} name="customerPhone" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-semibold flex items-center gap-1.5"><Phone className="w-4 h-4" /> رقم الهاتف</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="05XXXXXXXX" className="rounded-xl border-gray-200 focus:border-violet-400 h-12" data-testid="input-order-phone" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-
-                      <FormField control={form.control} name="wilaya" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-gray-700 font-semibold flex items-center gap-1.5"><MapPin className="w-4 h-4" /> الولاية</FormLabel>
-                          <FormControl>
-                            <select {...field} className="w-full h-12 px-4 border border-gray-200 rounded-xl text-gray-700 focus:border-violet-400 outline-none bg-white" data-testid="select-order-wilaya">
-                              <option value="">-- اختر الولاية --</option>
-                              {ALGERIAN_WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
-                            </select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-
-                      <div>
-                        <Label className="text-gray-700 font-semibold mb-2 block">الكمية</Label>
-                        <div className="flex items-center gap-3">
-                          <button type="button" onClick={() => form.setValue("quantity", Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-violet-100 hover:text-violet-700 font-bold text-lg transition-all flex items-center justify-center">-</button>
-                          <span className="w-10 text-center font-black text-lg text-gray-800">{quantity}</span>
-                          <button type="button" onClick={() => form.setValue("quantity", Math.min(20, quantity + 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-violet-100 hover:text-violet-700 font-bold text-lg transition-all flex items-center justify-center">+</button>
-                          <div className="flex-1 text-left">
-                            <span className="text-lg font-black text-violet-700">{totalPrice.toLocaleString("ar-DZ")} دج</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <motion.button
-                        type="submit"
-                        disabled={orderMutation.isPending}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full h-14 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-violet-500/30 hover:opacity-90 flex items-center justify-center gap-2 mt-2"
-                        data-testid="button-place-order"
-                      >
-                        {orderMutation.isPending ? (
-                          <><Loader2 className="w-5 h-5 animate-spin" /> جاري إرسال الطلب...</>
-                        ) : (
-                          <>اطلب الآن - {totalPrice.toLocaleString("ar-DZ")} دج</>
-                        )}
-                      </motion.button>
-                    </form>
-                  </Form>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <OrderForm product={product} source="product" />
           </motion.div>
         </div>
 

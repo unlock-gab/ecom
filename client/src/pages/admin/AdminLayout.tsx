@@ -1,13 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Zap, ChevronLeft, Menu, X, Home, Bell, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Zap, ChevronLeft, Menu, Home, Bell, Settings, Truck } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { icon: LayoutDashboard, label: "لوحة التحكم", href: "/admin" },
   { icon: Package, label: "المنتجات", href: "/admin/products" },
   { icon: ShoppingCart, label: "الطلبات", href: "/admin/orders" },
+  { icon: Truck, label: "أسعار التوصيل", href: "/admin/delivery" },
   { icon: Settings, label: "إعدادات البيكسل", href: "/admin/settings" },
 ];
 

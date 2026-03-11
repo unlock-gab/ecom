@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Phone, MapPin, ExternalLink } from "lucide-react";
+import { Search, Eye, X, Package, Truck, CheckCircle, Clock, XCircle, Phone, MapPin, Home, Building2 } from "lucide-react";
 import { Order } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -150,6 +150,12 @@ export default function AdminOrders() {
                           </td>
                           <td className="px-6 py-4 text-gray-400 hidden md:table-cell whitespace-nowrap">
                             <div className="flex items-center gap-1"><MapPin className="w-3 h-3 text-gray-600" />{order.wilaya}</div>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {order.deliveryType === "home"
+                                ? <><Home className="w-3 h-3 text-emerald-500" /><span className="text-xs text-emerald-400">منزل</span></>
+                                : <><Building2 className="w-3 h-3 text-blue-400" /><span className="text-xs text-blue-400">مكتب</span></>
+                              }
+                            </div>
                           </td>
                           <td className="px-6 py-4 hidden md:table-cell">
                             <div className="text-gray-300 text-xs line-clamp-1 max-w-[140px]">{order.productName}</div>
@@ -240,6 +246,8 @@ export default function AdminOrders() {
                       { label: "العميل", value: selectedOrder.customerName, icon: "👤" },
                       { label: "الهاتف", value: selectedOrder.customerPhone, icon: "📞" },
                       { label: "الولاية", value: selectedOrder.wilaya, icon: "📍" },
+                      { label: "التوصيل", value: selectedOrder.deliveryType === "home" ? "🏠 للمنزل" : "🏢 للمكتب", icon: "🚚" },
+                      { label: "رسوم التوصيل", value: `${parseFloat(String(selectedOrder.deliveryPrice || 0)).toLocaleString("ar-DZ")} دج`, icon: "💰" },
                       { label: "المصدر", value: selectedOrder.source === "landing" ? "Landing Page" : "صفحة المنتج", icon: "🔗" },
                       { label: "رقم الطلب", value: `#${selectedOrder.id.slice(-8)}`, icon: "🔢" },
                       { label: "التاريخ", value: selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString("ar-DZ") : "-", icon: "📅" },
