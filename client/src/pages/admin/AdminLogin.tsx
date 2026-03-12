@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Zap, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AdminLogin() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [, navigate] = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -13,20 +13,21 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") navigate("/admin");
+      else navigate("/confirmateur/orders");
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const user = await login(username, password);
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/confirmateur/orders");
-      }
+      await login(username, password);
     } catch (err: any) {
       setError(err.message || "خطأ في تسجيل الدخول");
-    } finally {
       setLoading(false);
     }
   };
