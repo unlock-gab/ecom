@@ -50,7 +50,7 @@ export default function Navbar() {
               <Link href="/">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2 cursor-pointer">
                   <div className={`flex items-center justify-center ${scrolled ? "bg-gray-900" : "bg-white/10 backdrop-blur-sm"} rounded-xl p-1`}>
-                    <img src="/zorabio-logo.png" alt="Zora Bio" className="h-9 w-auto" />
+                    <img src="/zorabio-logo.jpg" alt="Zora Bio" className="h-9 w-auto" />
                   </div>
                   <div className="flex flex-col leading-none">
                     <span className={`text-lg font-black tracking-tight ${scrolled ? "text-emerald-700" : "text-white"}`}>

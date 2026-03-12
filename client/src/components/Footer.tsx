@@ -11,7 +11,7 @@ export default function Footer() {
             <Link href="/">
               <div className="flex items-center gap-3 mb-4 cursor-pointer">
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-1.5">
-                  <img src="/zorabio-logo.png" alt="Zora Bio" className="h-10 w-auto" />
+                  <img src="/zorabio-logo.jpg" alt="Zora Bio" className="h-10 w-auto" />
                 </div>
                 <div>
                   <div className="text-white font-black text-lg leading-none">ZORA<span className="text-emerald-400">Bio</span>®</div>

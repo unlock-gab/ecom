@@ -67,7 +67,7 @@ export default function Home() {
               className="flex justify-center mb-6"
             >
               <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-2">
-                <img src="/zorabio-logo.png" alt="Zora Bio" className="h-20 w-auto" />
+                <img src="/zorabio-logo.jpg" alt="Zora Bio" className="h-20 w-auto" />
               </div>
             </motion.div>
             <motion.div

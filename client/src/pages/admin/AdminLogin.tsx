@@ -46,7 +46,7 @@ export default function AdminLogin() {
             transition={{ type: "spring", delay: 0.1 }}
             className="w-24 h-24 bg-gray-900 border border-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-emerald-500/20"
           >
-            <img src="/zorabio-logo.png" alt="Zora Bio" className="w-16 h-16 object-contain" />
+            <img src="/zorabio-logo.jpg" alt="Zora Bio" className="w-16 h-16 object-contain" />
           </motion.div>
           <h1 className="text-3xl font-black text-white mb-1">ZORA<span className="text-emerald-400">Bio</span>®</h1>
           <p className="text-gray-400 text-sm">لوحة الإدارة والمؤكدين</p>
