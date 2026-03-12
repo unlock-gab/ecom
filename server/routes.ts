@@ -163,6 +163,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(order);
   });
 
+  app.patch("/api/orders/:id", requireAuth, async (req, res) => {
+    const order = await storage.getOrder(req.params.id);
+    if (!order) return res.status(404).json({ message: "الطلب غير موجود" });
+    if (req.session.role === "confirmateur" && order.assignedTo !== req.session.userId) {
+      return res.status(403).json({ message: "غير مصرح" });
+    }
+    const allowed = ["customerName", "customerPhone", "wilaya", "deliveryType", "deliveryPrice", "quantity", "notes", "status"];
+    const updates: any = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    const updated = await storage.updateOrder(req.params.id, updates);
+    if (!updated) return res.status(404).json({ message: "الطلب غير موجود" });
+    res.json(updated);
+  });
+
   app.patch("/api/orders/:id/assign", requireAdmin, async (req, res) => {
     const { confirmateurId } = req.body;
     if (!confirmateurId) return res.status(400).json({ message: "معرف المؤكد مطلوب" });

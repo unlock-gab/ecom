@@ -25,6 +25,7 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updateOrder(id: string, updates: Partial<Order>): Promise<Order | undefined>;
   assignOrder(id: string, confirmateurId: string, confirmateurName: string): Promise<Order | undefined>;
   getSettings(): Promise<Record<string, string>>;
   updateSettings(settings: Record<string, string>): Promise<Record<string, string>>;
@@ -322,6 +323,14 @@ export class MemStorage implements IStorage {
     const existing = this.orders.get(id);
     if (!existing) return undefined;
     const updated = { ...existing, status };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async updateOrder(id: string, updates: Partial<Order>): Promise<Order | undefined> {
+    const existing = this.orders.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...updates, id: existing.id };
     this.orders.set(id, updated);
     return updated;
   }

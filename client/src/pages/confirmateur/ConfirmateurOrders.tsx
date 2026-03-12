@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, MapPin, Package, Truck, CheckCircle, Clock, XCircle, Search, Eye, X, Home, Building2, LogOut, Zap } from "lucide-react";
-import { Order } from "@shared/schema";
+import { Phone, MapPin, Package, Truck, CheckCircle, Clock, XCircle, Search, Eye, X, Home, Building2, LogOut, Zap, Edit2, Save, RotateCcw, StickyNote } from "lucide-react";
+import { Order, ALGERIAN_WILAYAS } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -18,6 +18,15 @@ const statusConfig: Record<string, { label: string; color: string; icon: any; bg
 
 const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
+type EditForm = {
+  customerName: string;
+  customerPhone: string;
+  wilaya: string;
+  deliveryType: "home" | "desk";
+  quantity: number;
+  notes: string;
+};
+
 export default function ConfirmateurOrders() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
@@ -25,8 +34,27 @@ export default function ConfirmateurOrders() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>({ customerName: "", customerPhone: "", wilaya: "", deliveryType: "home", quantity: 1, notes: "" });
+  const [notesValue, setNotesValue] = useState("");
+  const [notesDirty, setNotesDirty] = useState(false);
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({ queryKey: ["/api/orders"] });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Order> }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${id}`, updates);
+      return res.json();
+    },
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setSelectedOrder(updated);
+      setEditMode(false);
+      setNotesDirty(false);
+      toast({ title: "تم حفظ التعديلات ✓" });
+    },
+    onError: () => toast({ title: "خطأ في الحفظ", variant: "destructive" }),
+  });
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -41,9 +69,31 @@ export default function ConfirmateurOrders() {
     onError: () => toast({ title: "خطأ", variant: "destructive" }),
   });
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/admin/login");
+  const handleLogout = async () => { await logout(); navigate("/admin/login"); };
+
+  const openOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setEditMode(false);
+    setNotesValue(order.notes || "");
+    setNotesDirty(false);
+    setEditForm({
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      wilaya: order.wilaya,
+      deliveryType: order.deliveryType as "home" | "desk",
+      quantity: order.quantity,
+      notes: order.notes || "",
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedOrder) return;
+    updateOrderMutation.mutate({ id: selectedOrder.id, updates: editForm });
+  };
+
+  const handleSaveNotes = () => {
+    if (!selectedOrder) return;
+    updateOrderMutation.mutate({ id: selectedOrder.id, updates: { notes: notesValue } });
   };
 
   let filtered = orders;
@@ -54,15 +104,17 @@ export default function ConfirmateurOrders() {
     o.wilaya.includes(search)
   );
 
+  const inputCls = "w-full bg-gray-700 border border-gray-600 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 placeholder-gray-500";
+
   return (
     <div className="min-h-screen bg-gray-950" dir="rtl">
       <header className="sticky top-0 z-20 bg-gray-950/90 backdrop-blur-xl border-b border-gray-800 h-16 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center">
+          <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm">نوفا - مؤكد</p>
+            <p className="text-white font-bold text-sm">Zora Bio - مؤكد</p>
             <p className="text-gray-400 text-xs">{user?.name}</p>
           </div>
         </div>
@@ -94,14 +146,14 @@ export default function ConfirmateurOrders() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="ابحث..."
-              className="w-full bg-gray-900 border border-gray-800 text-white placeholder-gray-500 pr-10 pl-4 py-2.5 rounded-xl focus:outline-none focus:border-violet-500 text-sm"
+              className="w-full bg-gray-900 border border-gray-800 text-white placeholder-gray-500 pr-10 pl-4 py-2.5 rounded-xl focus:outline-none focus:border-emerald-500 text-sm"
               data-testid="input-confirmateur-search"
             />
           </div>
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="bg-gray-900 border border-gray-800 text-white px-4 py-2.5 rounded-xl focus:outline-none focus:border-violet-500 text-sm"
+            className="bg-gray-900 border border-gray-800 text-white px-4 py-2.5 rounded-xl focus:outline-none focus:border-emerald-500 text-sm"
           >
             <option value="all">جميع الحالات</option>
             {statusOptions.map(s => <option key={s} value={s}>{statusConfig[s]?.label}</option>)}
@@ -116,7 +168,7 @@ export default function ConfirmateurOrders() {
               <button
                 key={s}
                 onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${filterStatus === s ? "bg-violet-600 text-white border-violet-500" : "bg-gray-900 text-gray-400 border-gray-800 hover:border-gray-600"}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${filterStatus === s ? "bg-emerald-600 text-white border-emerald-500" : "bg-gray-900 text-gray-400 border-gray-800 hover:border-gray-600"}`}
               >
                 {s === "all" ? "الكل" : cfg?.label} ({count})
               </button>
@@ -126,9 +178,7 @@ export default function ConfirmateurOrders() {
 
         {isLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-gray-900 rounded-2xl p-5 animate-pulse h-24" />
-            ))}
+            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-gray-900 rounded-2xl p-5 animate-pulse h-24" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl py-16 text-center">
@@ -152,10 +202,11 @@ export default function ConfirmateurOrders() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex gap-4 flex-1">
                       {order.productImage && (
-                        <img src={order.productImage} alt={order.productName} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                        <img src={order.productImage} alt={order.productName} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-700" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold text-sm mb-1 line-clamp-1">{order.productName}</p>
+                        <p className="text-white font-bold text-sm mb-0.5 line-clamp-1">{order.productName}</p>
+                        <p className="text-gray-400 text-xs font-medium mb-1">{order.customerName}</p>
                         <div className="flex flex-wrap gap-3 text-xs text-gray-400">
                           <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{order.customerPhone}</span>
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{order.wilaya}</span>
@@ -164,7 +215,7 @@ export default function ConfirmateurOrders() {
                             {order.deliveryType === "home" ? "منزل" : "مكتب"}
                           </span>
                         </div>
-                        <p className="text-white font-bold mt-1.5">{parseFloat(order.total as string).toLocaleString("ar-DZ")} دج</p>
+                        <p className="text-emerald-400 font-bold mt-1.5 text-sm">{parseFloat(order.total as string).toLocaleString("ar-DZ")} دج</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -173,8 +224,8 @@ export default function ConfirmateurOrders() {
                         {cfg.label}
                       </span>
                       <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-violet-600/20 border border-gray-700 hover:border-violet-500 text-gray-400 hover:text-violet-400 rounded-xl transition-all text-xs font-medium"
+                        onClick={() => openOrder(order)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-emerald-600/20 border border-gray-700 hover:border-emerald-500 text-gray-400 hover:text-emerald-400 rounded-xl transition-all text-xs font-medium"
                         data-testid={`button-view-confirmateur-order-${order.id}`}
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -203,65 +254,172 @@ export default function ConfirmateurOrders() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-black text-white">تفاصيل الطلب</h2>
-                  <button onClick={() => setSelectedOrder(null)} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (editMode) {
+                          setEditMode(false);
+                          setEditForm({
+                            customerName: selectedOrder.customerName,
+                            customerPhone: selectedOrder.customerPhone,
+                            wilaya: selectedOrder.wilaya,
+                            deliveryType: selectedOrder.deliveryType as "home" | "desk",
+                            quantity: selectedOrder.quantity,
+                            notes: selectedOrder.notes || "",
+                          });
+                        } else {
+                          setEditMode(true);
+                        }
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${editMode ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30"}`}
+                      data-testid="button-toggle-edit-confirmateur"
+                    >
+                      {editMode ? <><RotateCcw className="w-3.5 h-3.5" />إلغاء</> : <><Edit2 className="w-3.5 h-3.5" />تعديل</>}
+                    </button>
+                    <button onClick={() => setSelectedOrder(null)} className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-gray-800 rounded-2xl p-4 mb-4 flex items-center gap-3">
-                  {selectedOrder.productImage && <img src={selectedOrder.productImage} alt={selectedOrder.productName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />}
-                  <div>
+                  {selectedOrder.productImage && (
+                    <img src={selectedOrder.productImage} alt={selectedOrder.productName} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-gray-700" />
+                  )}
+                  <div className="flex-1 min-w-0">
                     <div className="text-white font-bold text-sm">{selectedOrder.productName}</div>
                     <div className="text-gray-400 text-xs mt-0.5">الكمية: {selectedOrder.quantity}</div>
-                    <div className="text-violet-400 font-black mt-1">{parseFloat(selectedOrder.total as string).toLocaleString("ar-DZ")} دج</div>
+                    <div className="text-emerald-400 font-black mt-1">{parseFloat(selectedOrder.total as string).toLocaleString("ar-DZ")} دج</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  {[
-                    { label: "العميل", value: selectedOrder.customerName, icon: "👤" },
-                    { label: "الهاتف", value: selectedOrder.customerPhone, icon: "📞" },
-                    { label: "الولاية", value: selectedOrder.wilaya, icon: "📍" },
-                    { label: "التوصيل", value: selectedOrder.deliveryType === "home" ? "🏠 للمنزل" : "🏢 للمكتب", icon: "🚚" },
-                    { label: "رسوم التوصيل", value: `${parseFloat(String(selectedOrder.deliveryPrice || 0)).toLocaleString("ar-DZ")} دج`, icon: "💰" },
-                    { label: "التاريخ", value: selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString("ar-DZ") : "-", icon: "📅" },
-                  ].map((info, i) => (
-                    <div key={i} className="bg-gray-800 rounded-xl p-3">
-                      <div className="text-gray-500 text-xs mb-1">{info.icon} {info.label}</div>
-                      <div className="text-white text-sm font-medium break-words">{info.value}</div>
+                {editMode ? (
+                  <div className="space-y-4 mb-5">
+                    <h3 className="text-gray-300 text-sm font-bold flex items-center gap-2"><Edit2 className="w-4 h-4 text-emerald-400" />تعديل بيانات الطلب</h3>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block">👤 اسم العميل</label>
+                      <input value={editForm.customerName} onChange={e => setEditForm(f => ({ ...f, customerName: e.target.value }))} className={inputCls} />
                     </div>
-                  ))}
-                </div>
-
-                {selectedOrder.notes && (
-                  <div className="mb-5">
-                    <div className="text-gray-400 text-sm font-medium mb-2">ملاحظات</div>
-                    <div className="bg-gray-800 rounded-xl p-3 text-gray-300 text-sm">{selectedOrder.notes}</div>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block">📞 رقم الهاتف</label>
+                      <input value={editForm.customerPhone} onChange={e => setEditForm(f => ({ ...f, customerPhone: e.target.value }))} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block">📍 الولاية</label>
+                      <select value={editForm.wilaya} onChange={e => setEditForm(f => ({ ...f, wilaya: e.target.value }))} className={inputCls}>
+                        <option value="">-- اختر الولاية --</option>
+                        {ALGERIAN_WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block">🚚 نوع التوصيل</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[{ v: "home", l: "🏠 للمنزل" }, { v: "desk", l: "🏢 للمكتب" }].map(opt => (
+                          <button key={opt.v} type="button" onClick={() => setEditForm(f => ({ ...f, deliveryType: opt.v as "home" | "desk" }))}
+                            className={`py-2 rounded-xl text-xs font-bold border transition-all ${editForm.deliveryType === opt.v ? "bg-emerald-600/20 border-emerald-500 text-emerald-400" : "bg-gray-700 border-gray-600 text-gray-400 hover:border-gray-500"}`}>
+                            {opt.l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block">📦 الكمية</label>
+                      <div className="flex items-center gap-3">
+                        <button type="button" onClick={() => setEditForm(f => ({ ...f, quantity: Math.max(1, f.quantity - 1) }))} className="w-9 h-9 rounded-xl bg-gray-700 text-white hover:bg-gray-600 font-bold flex items-center justify-center">-</button>
+                        <span className="w-8 text-center text-white font-black">{editForm.quantity}</span>
+                        <button type="button" onClick={() => setEditForm(f => ({ ...f, quantity: Math.min(20, f.quantity + 1) }))} className="w-9 h-9 rounded-xl bg-gray-700 text-white hover:bg-gray-600 font-bold flex items-center justify-center">+</button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-gray-400 text-xs mb-1 block flex items-center gap-1"><StickyNote className="w-3 h-3" /> ملاحظات</label>
+                      <textarea
+                        value={editForm.notes}
+                        onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                        rows={3}
+                        placeholder="أضف ملاحظة للطلب..."
+                        className={`${inputCls} resize-none`}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={updateOrderMutation.isPending}
+                      className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-60"
+                      data-testid="button-save-edit-confirmateur"
+                    >
+                      <Save className="w-4 h-4" />
+                      {updateOrderMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {[
+                      { label: "العميل", value: selectedOrder.customerName, icon: "👤" },
+                      { label: "الهاتف", value: selectedOrder.customerPhone, icon: "📞" },
+                      { label: "الولاية", value: selectedOrder.wilaya, icon: "📍" },
+                      { label: "التوصيل", value: selectedOrder.deliveryType === "home" ? "🏠 للمنزل" : "🏢 للمكتب", icon: "🚚" },
+                      { label: "رسوم التوصيل", value: `${parseFloat(String(selectedOrder.deliveryPrice || 0)).toLocaleString("ar-DZ")} دج`, icon: "💰" },
+                      { label: "التاريخ", value: selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString("ar-DZ") : "-", icon: "📅" },
+                    ].map((info, i) => (
+                      <div key={i} className="bg-gray-800 rounded-xl p-3">
+                        <div className="text-gray-500 text-xs mb-1">{info.icon} {info.label}</div>
+                        <div className="text-white text-sm font-medium break-words">{info.value}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                <div>
-                  <div className="text-gray-400 text-sm font-medium mb-3">تحديث الحالة</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {statusOptions.map(s => {
-                      const cfg = statusConfig[s];
-                      const Icon = cfg.icon;
-                      const isActive = selectedOrder.status === s;
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => updateStatusMutation.mutate({ id: selectedOrder.id, status: s })}
-                          disabled={updateStatusMutation.isPending || isActive}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${isActive ? `${cfg.bg} ${cfg.color} border-current` : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-white"}`}
-                          data-testid={`button-confirmateur-status-${s}`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          {cfg.label}
-                        </button>
-                      );
-                    })}
+                {!editMode && (
+                  <div className="mb-5">
+                    <div className="text-gray-400 text-sm font-medium mb-2 flex items-center gap-2">
+                      <StickyNote className="w-4 h-4 text-yellow-400" />
+                      ملاحظات
+                    </div>
+                    <textarea
+                      value={notesValue}
+                      onChange={e => { setNotesValue(e.target.value); setNotesDirty(e.target.value !== (selectedOrder.notes || "")); }}
+                      rows={3}
+                      placeholder="اكتب ملاحظة للطلب..."
+                      className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-500/50 placeholder-gray-600 resize-none"
+                      data-testid="textarea-confirmateur-order-notes"
+                    />
+                    {notesDirty && (
+                      <button
+                        onClick={handleSaveNotes}
+                        disabled={updateOrderMutation.isPending}
+                        className="mt-2 w-full py-2 bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 hover:bg-yellow-500/30 transition-all"
+                        data-testid="button-save-confirmateur-notes"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        حفظ الملاحظة
+                      </button>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {!editMode && (
+                  <div>
+                    <div className="text-gray-400 text-sm font-medium mb-3">تحديث الحالة</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {statusOptions.map(s => {
+                        const cfg = statusConfig[s];
+                        const Icon = cfg.icon;
+                        const isActive = selectedOrder.status === s;
+                        return (
+                          <button
+                            key={s}
+                            onClick={() => updateStatusMutation.mutate({ id: selectedOrder.id, status: s })}
+                            disabled={updateStatusMutation.isPending || isActive}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all border ${isActive ? `${cfg.bg} ${cfg.color} border-current` : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-white"}`}
+                            data-testid={`button-confirmateur-status-${s}`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {cfg.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </>
