@@ -1,7 +1,7 @@
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Star, ChevronLeft, Shield, Truck, RefreshCw, ExternalLink } from "lucide-react";
+import { Star, ChevronLeft, Shield, Truck, RefreshCw, ExternalLink, ShoppingBag } from "lucide-react";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,9 +53,13 @@ export default function ProductDetail() {
     ? Math.round((1 - parseFloat(product.price as string) / parseFloat(product.originalPrice as string)) * 100)
     : 0;
 
+  const scrollToForm = () => {
+    document.getElementById("order-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32 lg:pb-8">
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
           <Link href="/"><span className="hover:text-violet-600 cursor-pointer">الرئيسية</span></Link>
           <ChevronLeft className="w-4 h-4" />
@@ -118,7 +122,9 @@ export default function ProductDetail() {
               ))}
             </div>
 
-            <OrderForm product={product} source="product" />
+            <div id="order-form-section">
+              <OrderForm product={product} source="product" />
+            </div>
           </motion.div>
         </div>
 
@@ -130,6 +136,26 @@ export default function ProductDetail() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 p-4 bg-white/90 backdrop-blur-sm border-t border-gray-200 shadow-2xl">
+        <div className="flex items-center gap-3 max-w-md mx-auto">
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 leading-none mb-0.5">السعر الإجمالي</div>
+            <div className="text-lg font-black text-emerald-600">
+              {parseFloat(product.price as string).toLocaleString("ar-DZ")} دج
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={scrollToForm}
+            className="flex-1 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 text-base"
+            data-testid="button-scroll-to-order"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            اطلب الآن
+          </motion.button>
+        </div>
       </div>
     </div>
   );

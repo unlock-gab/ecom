@@ -108,9 +108,9 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
   }
 
   return (
-    <div className="bg-white border-2 border-violet-100 rounded-2xl p-5 shadow-sm">
+    <div className="bg-white border-2 border-emerald-100 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center">
           <Phone className="w-5 h-5 text-white" />
         </div>
         <div>
@@ -127,7 +127,7 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
                 <User className="w-4 h-4 text-violet-500" /> الاسم الكامل
               </FormLabel>
               <FormControl>
-                <Input {...field} placeholder="أدخل اسمك الكامل" className="rounded-xl border-gray-200 focus:border-violet-400 h-11" data-testid={`${idPrefix}input-order-name`} />
+                <Input {...field} placeholder="أدخل اسمك الكامل" className="rounded-xl border-gray-200 focus:border-emerald-400 h-11" data-testid={`${idPrefix}input-order-name`} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,7 +139,7 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
                 <Phone className="w-4 h-4 text-violet-500" /> رقم الهاتف
               </FormLabel>
               <FormControl>
-                <Input {...field} placeholder="05XXXXXXXX" className="rounded-xl border-gray-200 focus:border-violet-400 h-11" data-testid={`${idPrefix}input-order-phone`} />
+                <Input {...field} placeholder="05XXXXXXXX" className="rounded-xl border-gray-200 focus:border-emerald-400 h-11" data-testid={`${idPrefix}input-order-phone`} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -153,7 +153,7 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
               <FormControl>
                 <select
                   {...field}
-                  className="w-full h-11 px-4 border border-gray-200 rounded-xl text-gray-700 focus:border-violet-400 outline-none bg-white text-sm"
+                  className="w-full h-11 px-4 border border-gray-200 rounded-xl text-gray-700 focus:border-emerald-400 outline-none bg-white text-sm"
                   data-testid={`${idPrefix}select-order-wilaya`}
                 >
                   <option value="">-- اختر الولاية --</option>
@@ -242,14 +242,14 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
           <div>
             <label className="text-gray-700 font-semibold text-sm mb-2 block">الكمية</label>
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => form.setValue("quantity", Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-violet-100 hover:text-violet-700 font-bold text-lg transition-all flex items-center justify-center">-</button>
+              <button type="button" onClick={() => form.setValue("quantity", Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-emerald-100 hover:text-emerald-700 font-bold text-lg transition-all flex items-center justify-center">-</button>
               <span className="w-10 text-center font-black text-lg text-gray-800">{quantity}</span>
-              <button type="button" onClick={() => form.setValue("quantity", Math.min(20, quantity + 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-violet-100 hover:text-violet-700 font-bold text-lg transition-all flex items-center justify-center">+</button>
+              <button type="button" onClick={() => form.setValue("quantity", Math.min(20, quantity + 1))} className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-emerald-100 hover:text-emerald-700 font-bold text-lg transition-all flex items-center justify-center">+</button>
             </div>
           </div>
 
           {selectedWilaya && deliveryAvailable && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-violet-50 rounded-xl p-3 border border-violet-100">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
               <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                 <span>سعر المنتج × {quantity}</span>
                 <span>{productTotal.toLocaleString("ar-DZ")} دج</span>
@@ -258,7 +258,7 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
                 <span>رسوم التوصيل</span>
                 <span>{deliveryPrice} دج</span>
               </div>
-              <div className="flex items-center justify-between font-black text-violet-700 text-base pt-2 border-t border-violet-200">
+              <div className="flex items-center justify-between font-black text-emerald-700 text-base pt-2 border-t border-emerald-200">
                 <span>الإجمالي</span>
                 <span>{grandTotal.toLocaleString("ar-DZ")} دج</span>
               </div>
@@ -270,7 +270,7 @@ export default function OrderForm({ product, source = "product", idPrefix = "" }
             disabled={orderMutation.isPending || (!!selectedWilaya && !deliveryAvailable)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full h-13 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-black text-base rounded-2xl shadow-xl shadow-violet-500/30 hover:opacity-90 flex items-center justify-center gap-2 mt-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full h-13 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-base rounded-2xl shadow-xl shadow-emerald-500/30 hover:opacity-90 flex items-center justify-center gap-2 mt-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed"
             data-testid={`${idPrefix}button-place-order`}
           >
             {orderMutation.isPending ? (
