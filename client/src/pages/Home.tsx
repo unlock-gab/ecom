@@ -66,9 +66,7 @@ export default function Home() {
               transition={{ delay: 0.1, type: "spring" }}
               className="flex justify-center mb-6"
             >
-              <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-2">
-                <img src="/zorabio-logo.jpg" alt="Zora Bio" className="h-20 w-auto" />
-              </div>
+              <img src="/zorabio-logo-white.png" alt="Zora Bio" className="h-24 w-auto drop-shadow-2xl" />
             </motion.div>
             <motion.div
               initial={{ scale: 0 }}
