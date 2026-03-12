@@ -2,13 +2,13 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Sparkles, Shield, Truck, RefreshCw, Star, ChevronLeft, Zap, Cpu, Shirt, BookOpen, Dumbbell, Home as HomeIcon } from "lucide-react";
+import { ArrowLeft, Sparkles, Shield, Truck, Star, Leaf, FlaskConical, Dumbbell, Heart, Zap, ChevronLeft, Flame } from "lucide-react";
 import { Product, Category } from "@shared/schema";
 import ProductCard from "@/components/ProductCard";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-const iconMap: Record<string, any> = { Cpu, Shirt, BookOpen, Dumbbell, Sparkles, Home: HomeIcon };
+const iconMap: Record<string, any> = {
+  Dumbbell, Sparkles, Leaf, Flame, Heart, FlaskConical, Zap, Star,
+};
 
 function AnimatedSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -29,51 +29,56 @@ function AnimatedSection({ children, className = "" }: { children: React.ReactNo
 export default function Home() {
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
-  const { data: featured = [] } = useQuery<Product[]>({ queryKey: ["/api/products?featured=true"] });
 
   const featuredProducts = products.filter(p => p.featured).slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-violet-950 via-purple-900 to-fuchsia-900">
+    <div className="min-h-screen bg-white" dir="rtl">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 via-emerald-950 to-teal-950">
         <div className="absolute inset-0 overflow-hidden">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full opacity-10"
               style={{
-                width: Math.random() * 300 + 100,
-                height: Math.random() * 300 + 100,
+                width: Math.random() * 350 + 80,
+                height: Math.random() * 350 + 80,
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                background: i % 2 === 0 ? "#a78bfa" : "#f0abfc",
+                background: i % 3 === 0 ? "#10b981" : i % 3 === 1 ? "#14b8a6" : "#6ee7b7",
               }}
               animate={{
-                x: [0, Math.random() * 60 - 30],
-                y: [0, Math.random() * 60 - 30],
-                scale: [1, 1.1, 1],
+                x: [0, Math.random() * 50 - 25],
+                y: [0, Math.random() * 50 - 25],
+                scale: [1, 1.15, 1],
               }}
-              transition={{ duration: 5 + i, repeat: Infinity, repeatType: "reverse" }}
+              transition={{ duration: 5 + i * 0.7, repeat: Infinity, repeatType: "reverse" }}
             />
           ))}
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djJoLTJ2LTJoMnptMC00aDJ2MmgtMnYtMnptLTQgNHYyaC0ydi0yaDJ6bTAtNGgydjJoLTJ2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-40" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: "spring" }}
+              className="flex justify-center mb-6"
+            >
+              <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-2">
+                <img src="/zorabio-logo.png" alt="Zora Bio" className="h-20 w-auto" />
+              </div>
+            </motion.div>
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring" }}
-              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-5 py-2 mb-8 text-white/90 text-sm"
+              className="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur-sm border border-emerald-500/30 rounded-full px-5 py-2 mb-6 text-emerald-300 text-sm"
             >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>تسوق أذكى. عيش أفضل.</span>
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Leaf className="w-4 h-4" />
+              <span>مكملات غذائية طبيعية 100% أصلية</span>
+              <Leaf className="w-4 h-4" />
             </motion.div>
           </motion.div>
 
@@ -81,13 +86,12 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="text-5xl sm:text-6xl lg:text-8xl font-black text-white mb-6 leading-tight"
+            className="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight"
           >
-            اكتشف عالم{" "}
-            <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
-              التسوق
+            ارتقِ بصحتك مع{" "}
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-green-300 bg-clip-text text-transparent">
+              Zora Bio
             </span>
-            <br />المميز
           </motion.h1>
 
           <motion.p
@@ -96,7 +100,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-lg sm:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
           >
-            آلاف المنتجات من أفضل العلامات التجارية بأسعار لا تُقارن. شحن سريع وإرجاع مجاني خلال 30 يوماً.
+            مكملات غذائية عالية الجودة لدعم أدائك الرياضي وصحتك اليومية. توصيل لكل ولايات الجزائر الـ 58. الدفع عند الاستلام.
           </motion.p>
 
           <motion.div
@@ -109,7 +113,7 @@ export default function Home() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-8 py-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold rounded-2xl shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 transition-all flex items-center gap-2 text-lg"
+                className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all flex items-center gap-2 text-lg"
                 data-testid="button-shop-now"
               >
                 <span>تسوق الآن</span>
@@ -122,7 +126,7 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-lg"
               >
-                العروض المميزة
+                الأكثر مبيعاً
               </motion.button>
             </Link>
           </motion.div>
@@ -134,13 +138,14 @@ export default function Home() {
             className="flex flex-wrap justify-center gap-8 mt-16"
           >
             {[
-              { num: "+5000", label: "منتج متاح" },
-              { num: "+50K", label: "عميل راضٍ" },
-              { num: "4.9★", label: "تقييم المتجر" },
+              { num: "+200", label: "منتج متاح" },
+              { num: "+15K", label: "عميل راضٍ" },
+              { num: "4.9★", label: "تقييم الزبائن" },
+              { num: "58", label: "ولاية نوصّل إليها" },
             ].map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-3xl font-black text-white">{stat.num}</div>
-                <div className="text-sm text-white/60 mt-1">{stat.label}</div>
+                <div className="text-3xl font-black text-emerald-400">{stat.num}</div>
+                <div className="text-sm text-white/50 mt-1">{stat.label}</div>
               </div>
             ))}
           </motion.div>
@@ -158,14 +163,14 @@ export default function Home() {
       </section>
 
       <AnimatedSection>
-        <section className="py-20 bg-gray-50">
+        <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { icon: Truck, title: "توصيل لكل الجزائر", desc: "من عنابة إلى تمنراست", color: "from-violet-500 to-violet-600" },
-                { icon: Shield, title: "دفع عند الاستلام", desc: "لا خطر، لا قلق", color: "from-emerald-500 to-emerald-600" },
-                { icon: RefreshCw, title: "إرجاع مضمون", desc: "خلال 7 أيام بلا أسئلة", color: "from-orange-500 to-orange-600" },
-                { icon: Star, title: "ضمان الجودة", desc: "منتجات أصلية مضمونة", color: "from-amber-500 to-amber-600" },
+                { icon: Truck, title: "توصيل لكل الجزائر", desc: "58 ولاية - منزل أو مكتب", color: "from-emerald-500 to-emerald-600" },
+                { icon: Shield, title: "الدفع عند الاستلام", desc: "لا خطر، لا قلق", color: "from-teal-500 to-teal-600" },
+                { icon: Leaf, title: "مكونات طبيعية", desc: "جودة مضمونة 100%", color: "from-green-500 to-green-600" },
+                { icon: Star, title: "ضمان الرضا", desc: "إرجاع خلال 7 أيام", color: "from-lime-600 to-green-600" },
               ].map((feat, i) => (
                 <motion.div
                   key={i}
@@ -194,33 +199,33 @@ export default function Home() {
             <div className="flex items-center justify-between mb-10">
               <div>
                 <h2 className="text-3xl lg:text-4xl font-black text-gray-900">تسوق حسب الفئة</h2>
-                <p className="text-gray-500 mt-2">اكتشف منتجاتنا في كل الأقسام</p>
+                <p className="text-gray-500 mt-2">اكتشف مكمّلاتنا في كل التصنيفات</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {categories.map((cat, i) => {
                 const Icon = iconMap[cat.icon] || Sparkles;
                 return (
-                  <motion.div
-                    key={cat.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05 }}
-                    whileHover={{ scale: 1.05, y: -4 }}
-                  >
-                    <Link href={`/products?category=${cat.slug}`}>
-                      <div className="group flex flex-col items-center gap-3 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl cursor-pointer transition-all hover:border-violet-200">
-                        <div
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform"
-                          style={{ background: `linear-gradient(135deg, ${cat.color}33, ${cat.color}55)` }}
-                        >
-                          <Icon className="w-7 h-7" style={{ color: cat.color }} />
-                        </div>
-                        <span className="text-sm font-bold text-gray-700 group-hover:text-violet-700 transition-colors">{cat.name}</span>
+                  <Link key={cat.id} href={`/products?category=${cat.slug}`}>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.07 }}
+                      whileHover={{ y: -6, scale: 1.04 }}
+                      className="group relative bg-white rounded-2xl p-5 text-center cursor-pointer shadow-sm hover:shadow-xl transition-all border border-gray-100 hover:border-emerald-200 overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div
+                        className="relative w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg"
+                        style={{ background: `linear-gradient(135deg, ${cat.color}cc, ${cat.color})` }}
+                      >
+                        <Icon className="w-7 h-7 text-white" />
                       </div>
-                    </Link>
-                  </motion.div>
+                      <p className="relative font-bold text-gray-800 group-hover:text-emerald-700 transition-colors text-sm">{cat.name}</p>
+                    </motion.div>
+                  </Link>
                 );
               })}
             </div>
@@ -229,113 +234,77 @@ export default function Home() {
       </AnimatedSection>
 
       <AnimatedSection>
-        <section className="py-20 bg-gray-50">
+        <section className="py-20 bg-gradient-to-br from-gray-50 to-emerald-50/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-10">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5 text-violet-600" />
-                  <span className="text-violet-600 font-semibold text-sm uppercase tracking-wide">المنتجات المميزة</span>
-                </div>
                 <h2 className="text-3xl lg:text-4xl font-black text-gray-900">الأكثر مبيعاً</h2>
+                <p className="text-gray-500 mt-2">اختيارات آلاف العملاء الجزائريين</p>
               </div>
-              <Link href="/products">
-                <Button variant="outline" className="hidden sm:flex items-center gap-2 border-violet-200 text-violet-700 hover:bg-violet-50 rounded-xl">
+              <Link href="/products?featured=true">
+                <motion.button
+                  whileHover={{ x: -4 }}
+                  className="hidden sm:flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                >
                   <span>عرض الكل</span>
                   <ChevronLeft className="w-4 h-4" />
-                </Button>
+                </motion.button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {featuredProducts.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
-            </div>
-          </div>
-        </section>
-      </AnimatedSection>
-
-      <AnimatedSection>
-        <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-violet-700 via-purple-700 to-fuchsia-700 rounded-3xl p-10 lg:p-16 text-white">
-              <div className="absolute inset-0 overflow-hidden">
-                {[...Array(4)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute rounded-full bg-white/10"
-                    style={{ width: 200 + i * 80, height: 200 + i * 80, left: `${70 + i * 10}%`, top: `${-20 + i * 20}%` }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 20 + i * 5, repeat: Infinity, ease: "linear" }}
-                  />
-                ))}
-              </div>
-              <div className="relative z-10 max-w-lg">
-                <Badge className="bg-white/20 text-white border-white/30 mb-4">عرض لفترة محدودة</Badge>
-                <h2 className="text-3xl lg:text-5xl font-black mb-4 leading-tight">
-                  خصم يصل إلى<br />
-                  <span className="text-yellow-300">50%</span> على كل شيء
-                </h2>
-                <p className="text-white/80 text-lg mb-8">
-                  لا تفوّت أفضل صفقات الموسم على أحدث المنتجات والعلامات التجارية المميزة.
-                </p>
-                <Link href="/products">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-8 py-4 bg-white text-violet-700 font-black rounded-2xl shadow-2xl hover:bg-yellow-300 hover:text-violet-900 transition-all flex items-center gap-2"
-                    data-testid="button-shop-offer"
-                  >
-                    <span>اغتنم الفرصة</span>
-                    <ArrowLeft className="w-5 h-5" />
-                  </motion.button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      </AnimatedSection>
-
-      <AnimatedSection>
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-4xl font-black text-gray-900">ماذا يقول عملاؤنا</h2>
-              <p className="text-gray-500 mt-2">آراء حقيقية من عملاء حقيقيين</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { name: "أحمد بلقاسم", avatar: "أ", rating: 5, text: "تجربة تسوق رائعة! التوصيل سريع والمنتجات مطابقة للوصف. الدفع عند الاستلام خلاني نثق أكثر.", city: "الجزائر" },
-                { name: "سارة بوزيدي", avatar: "س", rating: 5, text: "المنتجات أصلية 100% وجودتها ممتازة. وصلتني في يومين فقط لوهران. أنصح بيه الجميع!", city: "وهران" },
-                { name: "محمد حمزاوي", avatar: "م", rating: 5, text: "أسعار رائعة مقارنة بالسوق. سهل الطلب ولا توجد مشاكل. سأشتري مرة أخرى بالتأكيد.", city: "قسنطينة" },
-              ].map((review, i) => (
                 <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 30 }}
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.15 }}
-                  whileHover={{ y: -4 }}
-                  className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all border border-gray-100"
+                  transition={{ delay: i * 0.07 }}
                 >
-                  <div className="flex items-center gap-1 mb-4">
-                    {Array.from({ length: review.rating }, (_, j) => (
-                      <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-5">"{review.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {review.avatar}
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 text-sm">{review.name}</div>
-                      <div className="text-xs text-gray-400">{review.city}</div>
-                    </div>
-                  </div>
+                  <ProductCard product={product} />
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <section className="py-20 bg-gradient-to-br from-gray-950 via-emerald-950 to-teal-950 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            {[...Array(4)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full bg-emerald-400"
+                style={{ width: 200 + i * 100, height: 200 + i * 100, left: `${i * 25}%`, top: "50%", transform: "translateY(-50%)" }}
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 3 + i, repeat: Infinity, repeatType: "reverse" }}
+              />
+            ))}
+          </div>
+          <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+            <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ type: "spring" }}>
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full px-4 py-2 mb-6 text-emerald-300 text-sm">
+                <Sparkles className="w-4 h-4" />
+                <span>عرض خاص</span>
+              </div>
+            </motion.div>
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-4">
+              أول طلب؟ احصل على{" "}
+              <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">شحن مجاني</span>
+            </h2>
+            <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
+              اطلب أي مكمل غذائي من Zora Bio واستمتع بتوصيل مجاني لولايتك
+            </p>
+            <Link href="/products">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-2xl shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all text-lg"
+                data-testid="button-cta-order"
+              >
+                اطلب الآن
+              </motion.button>
+            </Link>
           </div>
         </section>
       </AnimatedSection>

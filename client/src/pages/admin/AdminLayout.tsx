@@ -66,7 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -107,7 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="hidden lg:flex lg:flex-col lg:fixed lg:right-0 lg:top-0 lg:bottom-0 lg:w-72 bg-gray-900 border-l border-gray-800 z-30">
         <div className="p-6 border-b border-gray-800">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -123,7 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link key={item.href} href={item.href}>
               <motion.div
                 whileHover={{ x: -3 }}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl mb-1 cursor-pointer transition-all ${location === item.href ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl mb-1 cursor-pointer transition-all ${location === item.href ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30" : "text-gray-400 hover:bg-gray-800 hover:text-white"}`}
                 data-testid={`nav-admin-${item.href.split("/").pop()}`}
               >
                 <item.icon className="w-5 h-5" />
@@ -136,7 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="p-4 border-t border-gray-800">
           <div className="flex items-center gap-3 px-4 py-2 mb-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
               {user?.name?.charAt(0) || "أ"}
             </div>
             <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Bell className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full" />
             </button>
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
               {user?.name?.charAt(0) || "أ"}
             </div>
           </div>

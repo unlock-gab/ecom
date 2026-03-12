@@ -43,11 +43,11 @@ export default function AdminLogin() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", delay: 0.1 }}
-            className="w-20 h-20 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-violet-500/40"
+            className="w-24 h-24 bg-gray-900 border border-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-emerald-500/20"
           >
-            <Zap className="w-10 h-10 text-white" />
+            <img src="/zorabio-logo.png" alt="Zora Bio" className="w-16 h-16 object-contain" />
           </motion.div>
-          <h1 className="text-3xl font-black text-white mb-1">نوفا</h1>
+          <h1 className="text-3xl font-black text-white mb-1">ZORA<span className="text-emerald-400">Bio</span>®</h1>
           <p className="text-gray-400 text-sm">لوحة الإدارة والمؤكدين</p>
         </div>
 
@@ -115,7 +115,7 @@ export default function AdminLogin() {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-black text-base rounded-2xl shadow-lg shadow-violet-500/30 hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-base rounded-2xl shadow-lg shadow-emerald-500/30 hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
               data-testid="button-login-submit"
             >
               {loading ? (
