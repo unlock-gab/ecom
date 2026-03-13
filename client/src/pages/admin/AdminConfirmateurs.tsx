@@ -229,6 +229,8 @@ export default function AdminConfirmateurs() {
             confirmateurs.map((c, i) => {
               const s = c.stats ?? { total: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
               const deliveryRate = s.total > 0 ? Math.round((s.delivered / s.total) * 100) : 0;
+              const confirmRate = s.total > 0 ? Math.round(((s.processing + s.shipped + s.delivered) / s.total) * 100) : 0;
+              const retourRate = s.total > 0 ? Math.round((s.cancelled / s.total) * 100) : 0;
               return (
                 <motion.div
                   key={c.id}
@@ -309,16 +311,36 @@ export default function AdminConfirmateurs() {
                       <span className="text-[10px] text-red-500/70 leading-none">ملغي</span>
                     </div>
                     {s.total > 0 && (
-                      <div className="mr-auto">
-                        <div className="text-xs text-gray-500 mb-1 text-left">نسبة التسليم</div>
+                      <div className="mr-auto flex flex-col gap-2 min-w-[140px]">
                         <div className="flex items-center gap-2">
-                          <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden">
+                          <span className="text-[11px] text-gray-400 w-20 text-right">نسبة التأكيد</span>
+                          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden min-w-[60px]">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all"
+                              style={{ width: `${confirmRate}%` }}
+                            />
+                          </div>
+                          <span className="text-blue-400 text-[11px] font-bold w-8">{confirmRate}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-400 w-20 text-right">نسبة التسليم</span>
+                          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden min-w-[60px]">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all"
                               style={{ width: `${deliveryRate}%` }}
                             />
                           </div>
-                          <span className="text-emerald-400 text-xs font-bold">{deliveryRate}%</span>
+                          <span className="text-emerald-400 text-[11px] font-bold w-8">{deliveryRate}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-gray-400 w-20 text-right">نسبة الـ Retour</span>
+                          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden min-w-[60px]">
+                            <div
+                              className="h-full bg-gradient-to-r from-red-500 to-rose-400 rounded-full transition-all"
+                              style={{ width: `${retourRate}%` }}
+                            />
+                          </div>
+                          <span className="text-red-400 text-[11px] font-bold w-8">{retourRate}%</span>
                         </div>
                       </div>
                     )}
