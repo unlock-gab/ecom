@@ -1,9 +1,13 @@
 import { type User, type InsertUser, type Product, type InsertProduct, type Order, type InsertOrder, type Category, type InsertCategory, DEFAULT_DELIVERY_PRICES } from "@shared/schema";
 import { randomUUID, createHash } from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 
 export function hashPassword(password: string): string {
   return createHash("sha256").update(password + "nova_store_salt_2026").digest("hex");
 }
+
+const DATA_FILE = path.join(process.cwd(), "data.json");
 
 export interface IStorage {
   getUserById(id: string): Promise<User | undefined>;
@@ -40,6 +44,51 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.seed();
+    this.load();
+    if (!fs.existsSync(DATA_FILE)) {
+      this.persist();
+    }
+  }
+
+  private persist() {
+    try {
+      const data = {
+        users: Array.from(this.users.entries()),
+        orders: Array.from(this.orders.entries()),
+        settings: this.settings,
+        products: Array.from(this.products.entries()),
+        categories: Array.from(this.categories.entries()),
+      };
+      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.error("[storage] failed to persist data:", e);
+    }
+  }
+
+  private load() {
+    try {
+      if (!fs.existsSync(DATA_FILE)) return;
+      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+      const data = JSON.parse(raw);
+      if (data.users) {
+        this.users = new Map(data.users.map(([k, v]: [string, any]) => [k, { ...v, createdAt: new Date(v.createdAt) }]));
+      }
+      if (data.orders) {
+        this.orders = new Map(data.orders.map(([k, v]: [string, any]) => [k, { ...v, createdAt: new Date(v.createdAt) }]));
+      }
+      if (data.settings) {
+        this.settings = data.settings;
+      }
+      if (data.products) {
+        this.products = new Map(data.products.map(([k, v]: [string, any]) => [k, { ...v, createdAt: new Date(v.createdAt) }]));
+      }
+      if (data.categories) {
+        this.categories = new Map(data.categories.map(([k, v]: [string, any]) => [k, v]));
+      }
+      console.log("[storage] data loaded from file ✓");
+    } catch (e) {
+      console.error("[storage] failed to load data (using seeded defaults):", e);
+    }
   }
 
   private seed() {
@@ -68,8 +117,7 @@ export class MemStorage implements IStorage {
 
     const prods: Product[] = [
       {
-        id: "p-1",
-        name: "Whey Protein Gold Standard",
+        id: "p-1", name: "Whey Protein Gold Standard",
         description: "بروتين واي ذهبي المعيار 100%، 24 غرام بروتين لكل حصة. بنكهة الشوكولاتة الفاخرة. الخيار الأول للرياضيين في الجزائر.",
         price: "7800", originalPrice: "9500", category: "protein",
         image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=500&q=80",
@@ -80,28 +128,23 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
       },
       {
-        id: "p-2",
-        name: "BCAA Amino 8:1:1",
+        id: "p-2", name: "BCAA Amino 8:1:1",
         description: "أحماض أمينية متفرعة السلسلة بنسبة 8:1:1، تحمي العضلات وتمنع الهدم العضلي خلال التمرين الشديد.",
         price: "4200", originalPrice: "5500", category: "protein",
         image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80",
         images: [], rating: "4.7", reviews: 1876, stock: 100, featured: true, badge: "جديد",
-        tags: ["أمينو", "BCAA"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["أمينو", "BCAA"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-3",
-        name: "Creatine Monohydrate Pure",
+        id: "p-3", name: "Creatine Monohydrate Pure",
         description: "كرياتين أحادي الهيدرات النقي 100%، يزيد القوة والأداء الرياضي. مُجرَّب علمياً لزيادة الكتلة العضلية.",
         price: "3500", originalPrice: "4500", category: "protein",
         image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80",
         images: [], rating: "4.8", reviews: 2100, stock: 120, featured: true, badge: "الأفضل",
-        tags: ["كرياتين"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["كرياتين"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-4",
-        name: "Omega-3 Fish Oil 1000mg",
+        id: "p-4", name: "Omega-3 Fish Oil 1000mg",
         description: "زيت السمك الطبيعي 1000 ملغ EPA وDHA، يدعم صحة القلب والمفاصل ويقلل الالتهابات.",
         price: "2800", originalPrice: "3800", category: "health",
         image: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=500&q=80",
@@ -112,38 +155,31 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
       },
       {
-        id: "p-5",
-        name: "Collagen Peptides Premium",
+        id: "p-5", name: "Collagen Peptides Premium",
         description: "كولاجين ببتيد متميز لصحة البشرة والمفاصل والعظام. مستخلص بالتحلل المائي لأقصى امتصاص.",
         price: "5200", originalPrice: "7000", category: "health",
         image: "https://images.unsplash.com/photo-1556228852-6d35a585d566?w=500&q=80",
         images: [], rating: "4.8", reviews: 987, stock: 90, featured: true, badge: "طبيعي",
-        tags: ["كولاجين", "بشرة"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["كولاجين", "بشرة"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-6",
-        name: "Multivitamin Complex Daily",
+        id: "p-6", name: "Multivitamin Complex Daily",
         description: "مجمع فيتامينات يومي شامل يحتوي على 25 فيتامين ومعدن أساسي. يدعم الطاقة والمناعة والصحة العامة.",
         price: "2500", originalPrice: "3200", category: "vitamins",
         image: "https://images.unsplash.com/photo-1607619662634-3ac55ec0e216?w=500&q=80",
         images: [], rating: "4.7", reviews: 2876, stock: 300, featured: true, badge: "الأفضل مبيعاً",
-        tags: ["فيتامينات", "يومي"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["فيتامينات", "يومي"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-7",
-        name: "Vitamin D3 + K2 5000IU",
+        id: "p-7", name: "Vitamin D3 + K2 5000IU",
         description: "فيتامين D3 مع K2 لأقصى امتصاص للكالسيوم. ضروري لصحة العظام والمناعة وتقليل الاكتئاب.",
         price: "1900", originalPrice: "2600", category: "vitamins",
         image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80",
         images: [], rating: "4.9", reviews: 1234, stock: 250, featured: false, badge: "ضروري",
-        tags: ["فيتامين د", "K2"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["فيتامين د", "K2"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-8",
-        name: "Fat Burner Thermogenic Pro",
+        id: "p-8", name: "Fat Burner Thermogenic Pro",
         description: "حارق دهون ثيرموجيني قوي بمزيج طبيعي من الكافيين الأخضر والتيروزين والفلفل الحار. يسرّع الحرق ويزيد الطاقة.",
         price: "4800", originalPrice: "6500", category: "weightloss",
         image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&q=80",
@@ -154,44 +190,36 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
       },
       {
-        id: "p-9",
-        name: "Pre-Workout Explosive Power",
+        id: "p-9", name: "Pre-Workout Explosive Power",
         description: "ما قبل التمرين المتفجر بجرعة تتيلة من الكافيين، البيتا-ألانين، والسيترولين. أداء لا يُقهر في كل تمرين.",
         price: "5500", originalPrice: "7200", category: "energy",
         image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80",
         images: [], rating: "4.6", reviews: 543, stock: 70, featured: false, badge: "جديد",
-        tags: ["طاقة", "pre-workout"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["طاقة", "pre-workout"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-10",
-        name: "Zinc + Magnesium ZMA Night",
+        id: "p-10", name: "Zinc + Magnesium ZMA Night",
         description: "تركيبة ZMA الليلية لتحسين جودة النوم، التعافي العضلي، ورفع مستوى التستوستيرون الطبيعي.",
         price: "2200", originalPrice: "3000", category: "vitamins",
         image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80",
         images: [], rating: "4.7", reviews: 892, stock: 180, featured: false, badge: "نوم أفضل",
-        tags: ["زنك", "مغنيسيوم"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["زنك", "مغنيسيوم"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-11",
-        name: "Mass Gainer 3000",
+        id: "p-11", name: "Mass Gainer 3000",
         description: "جينر ضخم لزيادة الوزن والكتلة العضلية. 1250 سعرة حرارية لكل حصة مع 50 غرام بروتين. للنحفاء الراغبين في الضخامة.",
         price: "8500", originalPrice: "11000", category: "protein",
         image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500&q=80",
         images: [], rating: "4.5", reviews: 432, stock: 50, featured: false, badge: "ضخامة",
-        tags: ["جينر", "وزن"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["جينر", "وزن"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
       {
-        id: "p-12",
-        name: "L-Carnitine Liquid 3000mg",
+        id: "p-12", name: "L-Carnitine Liquid 3000mg",
         description: "كارنيتين سائل 3000 ملغ لنقل الدهون إلى الطاقة. مثالي مع التمرين الهوائي لأقصى حرق للدهون.",
         price: "3200", originalPrice: "4200", category: "weightloss",
         image: "https://images.unsplash.com/photo-1544991875-5dc1b05f1571?w=500&q=80",
         images: [], rating: "4.6", reviews: 678, stock: 90, featured: true, badge: "حرق فعّال",
-        tags: ["كارنيتين", "تخسيس"], landingEnabled: false, landingHook: null, landingBenefits: [],
-        createdAt: new Date(),
+        tags: ["كارنيتين", "تخسيس"], landingEnabled: false, landingHook: null, landingBenefits: [], createdAt: new Date(),
       },
     ];
     prods.forEach(p => this.products.set(p.id, p));
@@ -235,6 +263,7 @@ export class MemStorage implements IStorage {
     const id = `user-${randomUUID()}`;
     const user: User = { ...data, id, createdAt: new Date() };
     this.users.set(id, user);
+    this.persist();
     return user;
   }
 
@@ -243,12 +272,15 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, ...data };
     this.users.set(id, updated);
+    this.persist();
     return updated;
   }
 
   async deleteUser(id: string): Promise<boolean> {
     if (id === "user-admin") return false;
-    return this.users.delete(id);
+    const result = this.users.delete(id);
+    if (result) this.persist();
+    return result;
   }
 
   async getConfirmateurs(): Promise<User[]> {
@@ -272,6 +304,7 @@ export class MemStorage implements IStorage {
       landingBenefits: product.landingBenefits ?? [],
     };
     this.products.set(id, p);
+    this.persist();
     return p;
   }
 
@@ -280,16 +313,22 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, ...product };
     this.products.set(id, updated);
+    this.persist();
     return updated;
   }
 
-  async deleteProduct(id: string): Promise<boolean> { return this.products.delete(id); }
+  async deleteProduct(id: string): Promise<boolean> {
+    const result = this.products.delete(id);
+    if (result) this.persist();
+    return result;
+  }
 
   async getCategories() { return Array.from(this.categories.values()); }
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
     const c: Category = { ...category, id, description: category.description ?? null };
     this.categories.set(id, c);
+    this.persist();
     return c;
   }
 
@@ -316,6 +355,7 @@ export class MemStorage implements IStorage {
       confirmateurName: order.confirmateurName ?? null,
     };
     this.orders.set(id, o);
+    this.persist();
     return o;
   }
 
@@ -324,6 +364,7 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, status };
     this.orders.set(id, updated);
+    this.persist();
     return updated;
   }
 
@@ -332,6 +373,7 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, ...updates, id: existing.id };
     this.orders.set(id, updated);
+    this.persist();
     return updated;
   }
 
@@ -340,12 +382,14 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     const updated = { ...existing, assignedTo: confirmateurId, confirmateurName };
     this.orders.set(id, updated);
+    this.persist();
     return updated;
   }
 
   async getSettings() { return this.settings; }
   async updateSettings(settings: Record<string, string>): Promise<Record<string, string>> {
     this.settings = { ...this.settings, ...settings };
+    this.persist();
     return this.settings;
   }
 }
