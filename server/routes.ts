@@ -44,7 +44,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   app.get("/api/confirmateurs", requireAdmin, async (req, res) => {
     const confirmateurs = await storage.getConfirmateurs();
-    res.json(confirmateurs.map(u => ({ id: u.id, username: u.username, name: u.name, role: u.role, createdAt: u.createdAt })));
+    const allOrders = await storage.getOrders();
+    const result = confirmateurs.map(u => {
+      const myOrders = allOrders.filter(o => o.assignedTo === u.id);
+      const stats = {
+        total: myOrders.length,
+        pending: myOrders.filter(o => o.status === "pending").length,
+        processing: myOrders.filter(o => o.status === "processing").length,
+        shipped: myOrders.filter(o => o.status === "shipped").length,
+        delivered: myOrders.filter(o => o.status === "delivered").length,
+        cancelled: myOrders.filter(o => o.status === "cancelled").length,
+      };
+      return { id: u.id, username: u.username, name: u.name, role: u.role, createdAt: u.createdAt, stats };
+    });
+    res.json(result);
   });
 
   app.post("/api/confirmateurs", requireAdmin, async (req, res) => {
