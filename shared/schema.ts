@@ -1,64 +1,64 @@
-import { pgTable, text, varchar, numeric, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, decimal, int, boolean, timestamp, json } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("confirmateur"),
-  name: text("name").notNull().default(""),
+export const users = mysqlTable("users", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
+  role: varchar("role", { length: 50 }).notNull().default("confirmateur"),
+  name: varchar("name", { length: 255 }).notNull().default(""),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const categories = pgTable("categories", {
-  id: varchar("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  icon: text("icon").notNull(),
-  color: text("color").notNull(),
+export const categories = mysqlTable("categories", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  icon: varchar("icon", { length: 255 }).notNull(),
+  color: varchar("color", { length: 50 }).notNull(),
   description: text("description"),
 });
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey(),
-  name: text("name").notNull(),
+export const products = mysqlTable("products", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
   description: text("description").notNull(),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  originalPrice: numeric("original_price", { precision: 10, scale: 2 }),
-  category: text("category").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
+  category: varchar("category", { length: 255 }).notNull(),
   image: text("image").notNull(),
-  images: text("images").array(),
-  rating: numeric("rating", { precision: 3, scale: 1 }).notNull().default("4.5"),
-  reviews: integer("reviews").notNull().default(0),
-  stock: integer("stock").notNull().default(100),
+  images: json("images").$type<string[]>(),
+  rating: decimal("rating", { precision: 3, scale: 1 }).notNull().default("4.5"),
+  reviews: int("reviews").notNull().default(0),
+  stock: int("stock").notNull().default(100),
   featured: boolean("featured").notNull().default(false),
-  badge: text("badge"),
-  tags: text("tags").array(),
+  badge: varchar("badge", { length: 255 }),
+  tags: json("tags").$type<string[]>(),
   landingEnabled: boolean("landing_enabled").notNull().default(false),
   landingHook: text("landing_hook"),
-  landingBenefits: text("landing_benefits").array(),
+  landingBenefits: json("landing_benefits").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const orders = pgTable("orders", {
-  id: varchar("id").primaryKey(),
-  customerName: text("customer_name").notNull(),
-  customerPhone: text("customer_phone").notNull(),
-  wilaya: text("wilaya").notNull(),
-  deliveryType: text("delivery_type").notNull().default("home"),
-  deliveryPrice: numeric("delivery_price", { precision: 10, scale: 2 }).notNull().default("0"),
-  productId: text("product_id").notNull(),
-  productName: text("product_name").notNull(),
+export const orders = mysqlTable("orders", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  customerName: varchar("customer_name", { length: 255 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 50 }).notNull(),
+  wilaya: varchar("wilaya", { length: 255 }).notNull(),
+  deliveryType: varchar("delivery_type", { length: 50 }).notNull().default("home"),
+  deliveryPrice: decimal("delivery_price", { precision: 10, scale: 2 }).notNull().default("0"),
+  productId: varchar("product_id", { length: 255 }).notNull(),
+  productName: varchar("product_name", { length: 255 }).notNull(),
   productImage: text("product_image"),
-  quantity: integer("quantity").notNull().default(1),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
-  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"),
+  quantity: int("quantity").notNull().default(1),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("pending"),
   notes: text("notes"),
-  source: text("source").default("product"),
-  assignedTo: text("assigned_to"),
-  confirmateurName: text("confirmateur_name"),
+  source: varchar("source", { length: 50 }).default("product"),
+  assignedTo: varchar("assigned_to", { length: 255 }),
+  confirmateurName: varchar("confirmateur_name", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

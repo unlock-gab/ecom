@@ -46,30 +46,34 @@ let cachedSettings: Record<string, string> | null = null;
 export class DatabaseStorage implements IStorage {
 
   async getUserById(id: string) {
-    const [u] = await db.select().from(users).where(eq(users.id, id));
-    return u;
+    const rows = await db.select().from(users).where(eq(users.id, id));
+    return rows[0];
   }
 
   async getUserByUsername(username: string) {
-    const [u] = await db.select().from(users).where(eq(users.username, username));
-    return u;
+    const rows = await db.select().from(users).where(eq(users.username, username));
+    return rows[0];
   }
 
   async createUser(data: InsertUser): Promise<User> {
     const id = `user-${randomUUID()}`;
-    const [u] = await db.insert(users).values({ ...data, id }).returning();
-    return u;
+    await db.insert(users).values({ ...data, id });
+    const rows = await db.select().from(users).where(eq(users.id, id));
+    return rows[0];
   }
 
   async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
-    const [u] = await db.update(users).set(data).where(eq(users.id, id)).returning();
-    return u;
+    await db.update(users).set(data).where(eq(users.id, id));
+    const rows = await db.select().from(users).where(eq(users.id, id));
+    return rows[0];
   }
 
   async deleteUser(id: string): Promise<boolean> {
     if (id === "user-admin") return false;
-    const result = await db.delete(users).where(eq(users.id, id)).returning();
-    return result.length > 0;
+    const rows = await db.select().from(users).where(eq(users.id, id));
+    if (rows.length === 0) return false;
+    await db.delete(users).where(eq(users.id, id));
+    return true;
   }
 
   async getConfirmateurs(): Promise<User[]> {
@@ -82,8 +86,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    const [p] = await db.select().from(products).where(eq(products.id, id));
-    return p;
+    const rows = await db.select().from(products).where(eq(products.id, id));
+    return rows[0];
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
@@ -92,7 +96,7 @@ export class DatabaseStorage implements IStorage {
 
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    const [p] = await db.insert(products).values({
+    await db.insert(products).values({
       ...product, id,
       rating: product.rating ?? "4.5",
       reviews: product.reviews ?? 0,
@@ -105,18 +109,22 @@ export class DatabaseStorage implements IStorage {
       landingEnabled: product.landingEnabled ?? false,
       landingHook: product.landingHook ?? null,
       landingBenefits: product.landingBenefits ?? [],
-    }).returning();
-    return p;
+    });
+    const rows = await db.select().from(products).where(eq(products.id, id));
+    return rows[0];
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [p] = await db.update(products).set(product).where(eq(products.id, id)).returning();
-    return p;
+    await db.update(products).set(product).where(eq(products.id, id));
+    const rows = await db.select().from(products).where(eq(products.id, id));
+    return rows[0];
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    const result = await db.delete(products).where(eq(products.id, id)).returning();
-    return result.length > 0;
+    const rows = await db.select().from(products).where(eq(products.id, id));
+    if (rows.length === 0) return false;
+    await db.delete(products).where(eq(products.id, id));
+    return true;
   }
 
   async getCategories(): Promise<Category[]> {
@@ -125,8 +133,9 @@ export class DatabaseStorage implements IStorage {
 
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
-    const [c] = await db.insert(categories).values({ ...category, id }).returning();
-    return c;
+    await db.insert(categories).values({ ...category, id });
+    const rows = await db.select().from(categories).where(eq(categories.id, id));
+    return rows[0];
   }
 
   async getOrders(): Promise<Order[]> {
@@ -140,13 +149,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(id: string): Promise<Order | undefined> {
-    const [o] = await db.select().from(orders).where(eq(orders.id, id));
-    return o;
+    const rows = await db.select().from(orders).where(eq(orders.id, id));
+    return rows[0];
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
     const id = `ord-${randomUUID()}`;
-    const [o] = await db.insert(orders).values({
+    await db.insert(orders).values({
       ...order, id,
       status: order.status ?? "pending",
       notes: order.notes ?? null,
@@ -157,27 +166,30 @@ export class DatabaseStorage implements IStorage {
       deliveryPrice: order.deliveryPrice ?? "0",
       assignedTo: order.assignedTo ?? null,
       confirmateurName: order.confirmateurName ?? null,
-    }).returning();
-    return o;
+    });
+    const rows = await db.select().from(orders).where(eq(orders.id, id));
+    return rows[0];
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const [o] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
-    return o;
+    await db.update(orders).set({ status }).where(eq(orders.id, id));
+    const rows = await db.select().from(orders).where(eq(orders.id, id));
+    return rows[0];
   }
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order | undefined> {
     const { id: _id, createdAt: _c, ...safeUpdates } = updates as any;
-    const [o] = await db.update(orders).set(safeUpdates).where(eq(orders.id, id)).returning();
-    return o;
+    await db.update(orders).set(safeUpdates).where(eq(orders.id, id));
+    const rows = await db.select().from(orders).where(eq(orders.id, id));
+    return rows[0];
   }
 
   async assignOrder(id: string, confirmateurId: string, confirmateurName: string): Promise<Order | undefined> {
-    const [o] = await db.update(orders)
+    await db.update(orders)
       .set({ assignedTo: confirmateurId, confirmateurName })
-      .where(eq(orders.id, id))
-      .returning();
-    return o;
+      .where(eq(orders.id, id));
+    const rows = await db.select().from(orders).where(eq(orders.id, id));
+    return rows[0];
   }
 
   async getSettings(): Promise<Record<string, string>> {
