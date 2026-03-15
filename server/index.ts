@@ -1,8 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import createMemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+
+const MemoryStore = createMemoryStore(session);
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,12 +35,18 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET environment variable is required in production");
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || "nova-store-secret-2026",
+  store: new MemoryStore({ checkPeriod: 86400000 }),
+  secret: sessionSecret || "dev-only-secret-not-for-production",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
