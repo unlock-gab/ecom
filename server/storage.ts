@@ -40,40 +40,35 @@ export interface IStorage {
   updateSettings(settings: Record<string, string>): Promise<Record<string, string>>;
 }
 
-const SETTINGS_KEY = "app_settings";
 let cachedSettings: Record<string, string> | null = null;
 
 export class DatabaseStorage implements IStorage {
 
   async getUserById(id: string) {
-    const rows = await db.select().from(users).where(eq(users.id, id));
-    return rows[0];
+    const [u] = await db.select().from(users).where(eq(users.id, id));
+    return u;
   }
 
   async getUserByUsername(username: string) {
-    const rows = await db.select().from(users).where(eq(users.username, username));
-    return rows[0];
+    const [u] = await db.select().from(users).where(eq(users.username, username));
+    return u;
   }
 
   async createUser(data: InsertUser): Promise<User> {
     const id = `user-${randomUUID()}`;
-    await db.insert(users).values({ ...data, id });
-    const rows = await db.select().from(users).where(eq(users.id, id));
-    return rows[0];
+    const [u] = await db.insert(users).values({ ...data, id }).returning();
+    return u;
   }
 
   async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
-    await db.update(users).set(data).where(eq(users.id, id));
-    const rows = await db.select().from(users).where(eq(users.id, id));
-    return rows[0];
+    const [u] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    return u;
   }
 
   async deleteUser(id: string): Promise<boolean> {
     if (id === "user-admin") return false;
-    const rows = await db.select().from(users).where(eq(users.id, id));
-    if (rows.length === 0) return false;
-    await db.delete(users).where(eq(users.id, id));
-    return true;
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
   }
 
   async getConfirmateurs(): Promise<User[]> {
@@ -86,8 +81,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProduct(id: string): Promise<Product | undefined> {
-    const rows = await db.select().from(products).where(eq(products.id, id));
-    return rows[0];
+    const [p] = await db.select().from(products).where(eq(products.id, id));
+    return p;
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
@@ -96,7 +91,7 @@ export class DatabaseStorage implements IStorage {
 
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    await db.insert(products).values({
+    const [p] = await db.insert(products).values({
       ...product, id,
       rating: product.rating ?? "4.5",
       reviews: product.reviews ?? 0,
@@ -109,22 +104,18 @@ export class DatabaseStorage implements IStorage {
       landingEnabled: product.landingEnabled ?? false,
       landingHook: product.landingHook ?? null,
       landingBenefits: product.landingBenefits ?? [],
-    });
-    const rows = await db.select().from(products).where(eq(products.id, id));
-    return rows[0];
+    }).returning();
+    return p;
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined> {
-    await db.update(products).set(product).where(eq(products.id, id));
-    const rows = await db.select().from(products).where(eq(products.id, id));
-    return rows[0];
+    const [p] = await db.update(products).set(product).where(eq(products.id, id)).returning();
+    return p;
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    const rows = await db.select().from(products).where(eq(products.id, id));
-    if (rows.length === 0) return false;
-    await db.delete(products).where(eq(products.id, id));
-    return true;
+    const result = await db.delete(products).where(eq(products.id, id)).returning();
+    return result.length > 0;
   }
 
   async getCategories(): Promise<Category[]> {
@@ -133,9 +124,8 @@ export class DatabaseStorage implements IStorage {
 
   async createCategory(category: InsertCategory): Promise<Category> {
     const id = randomUUID();
-    await db.insert(categories).values({ ...category, id });
-    const rows = await db.select().from(categories).where(eq(categories.id, id));
-    return rows[0];
+    const [c] = await db.insert(categories).values({ ...category, id }).returning();
+    return c;
   }
 
   async getOrders(): Promise<Order[]> {
@@ -149,13 +139,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(id: string): Promise<Order | undefined> {
-    const rows = await db.select().from(orders).where(eq(orders.id, id));
-    return rows[0];
+    const [o] = await db.select().from(orders).where(eq(orders.id, id));
+    return o;
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
     const id = `ord-${randomUUID()}`;
-    await db.insert(orders).values({
+    const [o] = await db.insert(orders).values({
       ...order, id,
       status: order.status ?? "pending",
       notes: order.notes ?? null,
@@ -166,30 +156,27 @@ export class DatabaseStorage implements IStorage {
       deliveryPrice: order.deliveryPrice ?? "0",
       assignedTo: order.assignedTo ?? null,
       confirmateurName: order.confirmateurName ?? null,
-    });
-    const rows = await db.select().from(orders).where(eq(orders.id, id));
-    return rows[0];
+    }).returning();
+    return o;
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    await db.update(orders).set({ status }).where(eq(orders.id, id));
-    const rows = await db.select().from(orders).where(eq(orders.id, id));
-    return rows[0];
+    const [o] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
+    return o;
   }
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order | undefined> {
     const { id: _id, createdAt: _c, ...safeUpdates } = updates as any;
-    await db.update(orders).set(safeUpdates).where(eq(orders.id, id));
-    const rows = await db.select().from(orders).where(eq(orders.id, id));
-    return rows[0];
+    const [o] = await db.update(orders).set(safeUpdates).where(eq(orders.id, id)).returning();
+    return o;
   }
 
   async assignOrder(id: string, confirmateurId: string, confirmateurName: string): Promise<Order | undefined> {
-    await db.update(orders)
+    const [o] = await db.update(orders)
       .set({ assignedTo: confirmateurId, confirmateurName })
-      .where(eq(orders.id, id));
-    const rows = await db.select().from(orders).where(eq(orders.id, id));
-    return rows[0];
+      .where(eq(orders.id, id))
+      .returning();
+    return o;
   }
 
   async getSettings(): Promise<Record<string, string>> {
@@ -225,18 +212,18 @@ async function seedDatabase() {
   ]);
 
   await db.insert(products).values([
-    { id: "p-1", name: "Whey Protein Gold Standard", description: "بروتين واي ذهبي المعيار 100%، 24 غرام بروتين لكل حصة. بنكهة الشوكولاتة الفاخرة. الخيار الأول للرياضيين في الجزائر.", price: "7800", originalPrice: "9500", category: "protein", image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=500&q=80", images: [], rating: "4.9", reviews: 3241, stock: 80, featured: true, badge: "الأكثر مبيعاً", tags: ["بروتين", "واي"], landingEnabled: true, landingHook: "24 غرام بروتين لكل حصة - النتائج تظهر في 30 يوماً!", landingBenefits: ["24g بروتين لكل حصة", "يسرّع الاستشفاء العضلي", "بدون سكر مضاف", "مذاق رائع بالشوكولاتة"] },
-    { id: "p-2", name: "BCAA Amino 8:1:1", description: "أحماض أمينية متفرعة السلسلة بنسبة 8:1:1، تحمي العضلات وتمنع الهدم العضلي خلال التمرين الشديد.", price: "4200", originalPrice: "5500", category: "protein", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80", images: [], rating: "4.7", reviews: 1876, stock: 100, featured: true, badge: "جديد", tags: ["أمينو", "BCAA"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-3", name: "Creatine Monohydrate Pure", description: "كرياتين أحادي الهيدرات النقي 100%، يزيد القوة والأداء الرياضي. مُجرَّب علمياً لزيادة الكتلة العضلية.", price: "3500", originalPrice: "4500", category: "protein", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80", images: [], rating: "4.8", reviews: 2100, stock: 120, featured: true, badge: "الأفضل", tags: ["كرياتين"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-4", name: "Omega-3 Fish Oil 1000mg", description: "زيت السمك الطبيعي 1000 ملغ EPA وDHA، يدعم صحة القلب والمفاصل ويقلل الالتهابات.", price: "2800", originalPrice: "3800", category: "health", image: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=500&q=80", images: [], rating: "4.6", reviews: 1543, stock: 200, featured: true, badge: "خصم 26%", tags: ["أوميغا", "صحة"], landingEnabled: true, landingHook: "قلب أقوى، مفاصل أصح - أوميغا-3 يومياً!", landingBenefits: ["يحمي صحة القلب", "يقلل الالتهابات", "يدعم صحة المخ والمفاصل", "مصدر طبيعي 100%"] },
-    { id: "p-5", name: "Collagen Peptides Premium", description: "كولاجين ببتيد متميز لصحة البشرة والمفاصل والعظام. مستخلص بالتحلل المائي لأقصى امتصاص.", price: "5200", originalPrice: "7000", category: "health", image: "https://images.unsplash.com/photo-1556228852-6d35a585d566?w=500&q=80", images: [], rating: "4.8", reviews: 987, stock: 90, featured: true, badge: "طبيعي", tags: ["كولاجين", "بشرة"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-6", name: "Multivitamin Complex Daily", description: "مجمع فيتامينات يومي شامل يحتوي على 25 فيتامين ومعدن أساسي. يدعم الطاقة والمناعة والصحة العامة.", price: "2500", originalPrice: "3200", category: "vitamins", image: "https://images.unsplash.com/photo-1607619662634-3ac55ec0e216?w=500&q=80", images: [], rating: "4.7", reviews: 2876, stock: 300, featured: true, badge: "الأفضل مبيعاً", tags: ["فيتامينات", "يومي"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-7", name: "Vitamin D3 + K2 5000IU", description: "فيتامين D3 مع K2 لأقصى امتصاص للكالسيوم. ضروري لصحة العظام والمناعة وتقليل الاكتئاب.", price: "1900", originalPrice: "2600", category: "vitamins", image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80", images: [], rating: "4.9", reviews: 1234, stock: 250, featured: false, badge: "ضروري", tags: ["فيتامين د", "K2"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-8", name: "Fat Burner Thermogenic Pro", description: "حارق دهون ثيرموجيني قوي بمزيج طبيعي من الكافيين الأخضر والتيروزين والفلفل الحار. يسرّع الحرق ويزيد الطاقة.", price: "4800", originalPrice: "6500", category: "weightloss", image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&q=80", images: [], rating: "4.5", reviews: 765, stock: 60, featured: true, badge: "قوي", tags: ["تخسيس", "حرق"], landingEnabled: true, landingHook: "احرق الدهون الزائدة في 4 أسابيع - مضمون أو مسترد!", landingBenefits: ["يسرّع الأيض بـ 30%", "يقمع الشهية الزائدة", "طاقة طوال اليوم", "مكونات طبيعية 100%"] },
-    { id: "p-9", name: "Pre-Workout Explosive Power", description: "ما قبل التمرين المتفجر بجرعة تتيلة من الكافيين، البيتا-ألانين، والسيترولين. أداء لا يُقهر في كل تمرين.", price: "5500", originalPrice: "7200", category: "energy", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80", images: [], rating: "4.6", reviews: 543, stock: 70, featured: false, badge: "جديد", tags: ["طاقة", "pre-workout"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-10", name: "Zinc + Magnesium ZMA Night", description: "تركيبة ZMA الليلية لتحسين جودة النوم، التعافي العضلي، ورفع مستوى التستوستيرون الطبيعي.", price: "2200", originalPrice: "3000", category: "vitamins", image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80", images: [], rating: "4.7", reviews: 892, stock: 180, featured: false, badge: "نوم أفضل", tags: ["زنك", "مغنيسيوم"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-11", name: "Mass Gainer 3000", description: "جينر ضخم لزيادة الوزن والكتلة العضلية. 1250 سعرة حرارية لكل حصة مع 50 غرام بروتين. للنحفاء الراغبين في الضخامة.", price: "8500", originalPrice: "11000", category: "protein", image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500&q=80", images: [], rating: "4.5", reviews: 432, stock: 50, featured: false, badge: "ضخامة", tags: ["جينر", "وزن"], landingEnabled: false, landingHook: null, landingBenefits: [] },
-    { id: "p-12", name: "L-Carnitine Liquid 3000mg", description: "كارنيتين سائل 3000 ملغ لنقل الدهون إلى الطاقة. مثالي مع التمرين الهوائي لأقصى حرق للدهون.", price: "3200", originalPrice: "4200", category: "weightloss", image: "https://images.unsplash.com/photo-1544991875-5dc1b05f1571?w=500&q=80", images: [], rating: "4.6", reviews: 678, stock: 90, featured: true, badge: "حرق فعّال", tags: ["كارنيتين", "تخسيس"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-1", name: "Whey Protein Gold Standard", description: "بروتين واي ذهبي المعيار 100%، 24 غرام بروتين لكل حصة.", price: "7800", originalPrice: "9500", category: "protein", image: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=500&q=80", images: [], rating: "4.9", reviews: 3241, stock: 80, featured: true, badge: "الأكثر مبيعاً", tags: ["بروتين", "واي"], landingEnabled: true, landingHook: "24 غرام بروتين لكل حصة - النتائج تظهر في 30 يوماً!", landingBenefits: ["24g بروتين لكل حصة", "يسرّع الاستشفاء العضلي", "بدون سكر مضاف", "مذاق رائع بالشوكولاتة"] },
+    { id: "p-2", name: "BCAA Amino 8:1:1", description: "أحماض أمينية متفرعة السلسلة بنسبة 8:1:1.", price: "4200", originalPrice: "5500", category: "protein", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80", images: [], rating: "4.7", reviews: 1876, stock: 100, featured: true, badge: "جديد", tags: ["أمينو", "BCAA"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-3", name: "Creatine Monohydrate Pure", description: "كرياتين أحادي الهيدرات النقي 100%.", price: "3500", originalPrice: "4500", category: "protein", image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80", images: [], rating: "4.8", reviews: 2100, stock: 120, featured: true, badge: "الأفضل", tags: ["كرياتين"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-4", name: "Omega-3 Fish Oil 1000mg", description: "زيت السمك الطبيعي 1000 ملغ EPA وDHA.", price: "2800", originalPrice: "3800", category: "health", image: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=500&q=80", images: [], rating: "4.6", reviews: 1543, stock: 200, featured: true, badge: "خصم 26%", tags: ["أوميغا", "صحة"], landingEnabled: true, landingHook: "قلب أقوى، مفاصل أصح - أوميغا-3 يومياً!", landingBenefits: ["يحمي صحة القلب", "يقلل الالتهابات", "يدعم صحة المخ والمفاصل", "مصدر طبيعي 100%"] },
+    { id: "p-5", name: "Collagen Peptides Premium", description: "كولاجين ببتيد متميز لصحة البشرة والمفاصل.", price: "5200", originalPrice: "7000", category: "health", image: "https://images.unsplash.com/photo-1556228852-6d35a585d566?w=500&q=80", images: [], rating: "4.8", reviews: 987, stock: 90, featured: true, badge: "طبيعي", tags: ["كولاجين", "بشرة"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-6", name: "Multivitamin Complex Daily", description: "مجمع فيتامينات يومي شامل يحتوي على 25 فيتامين.", price: "2500", originalPrice: "3200", category: "vitamins", image: "https://images.unsplash.com/photo-1607619662634-3ac55ec0e216?w=500&q=80", images: [], rating: "4.7", reviews: 2876, stock: 300, featured: true, badge: "الأفضل مبيعاً", tags: ["فيتامينات", "يومي"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-7", name: "Vitamin D3 + K2 5000IU", description: "فيتامين D3 مع K2 لأقصى امتصاص للكالسيوم.", price: "1900", originalPrice: "2600", category: "vitamins", image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80", images: [], rating: "4.9", reviews: 1234, stock: 250, featured: false, badge: "ضروري", tags: ["فيتامين د", "K2"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-8", name: "Fat Burner Thermogenic Pro", description: "حارق دهون ثيرموجيني قوي بمزيج طبيعي.", price: "4800", originalPrice: "6500", category: "weightloss", image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&q=80", images: [], rating: "4.5", reviews: 765, stock: 60, featured: true, badge: "قوي", tags: ["تخسيس", "حرق"], landingEnabled: true, landingHook: "احرق الدهون الزائدة في 4 أسابيع - مضمون أو مسترد!", landingBenefits: ["يسرّع الأيض بـ 30%", "يقمع الشهية الزائدة", "طاقة طوال اليوم", "مكونات طبيعية 100%"] },
+    { id: "p-9", name: "Pre-Workout Explosive Power", description: "ما قبل التمرين المتفجر بالكافيين والبيتا-ألانين.", price: "5500", originalPrice: "7200", category: "energy", image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80", images: [], rating: "4.6", reviews: 543, stock: 70, featured: false, badge: "جديد", tags: ["طاقة", "pre-workout"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-10", name: "Zinc + Magnesium ZMA Night", description: "تركيبة ZMA الليلية لتحسين جودة النوم.", price: "2200", originalPrice: "3000", category: "vitamins", image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=500&q=80", images: [], rating: "4.7", reviews: 892, stock: 180, featured: false, badge: "نوم أفضل", tags: ["زنك", "مغنيسيوم"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-11", name: "Mass Gainer 3000", description: "جينر ضخم لزيادة الوزن والكتلة العضلية.", price: "8500", originalPrice: "11000", category: "protein", image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500&q=80", images: [], rating: "4.5", reviews: 432, stock: 50, featured: false, badge: "ضخامة", tags: ["جينر", "وزن"], landingEnabled: false, landingHook: null, landingBenefits: [] },
+    { id: "p-12", name: "L-Carnitine Liquid 3000mg", description: "كارنيتين سائل 3000 ملغ لنقل الدهون إلى الطاقة.", price: "3200", originalPrice: "4200", category: "weightloss", image: "https://images.unsplash.com/photo-1544991875-5dc1b05f1571?w=500&q=80", images: [], rating: "4.6", reviews: 678, stock: 90, featured: true, badge: "حرق فعّال", tags: ["كارنيتين", "تخسيس"], landingEnabled: false, landingHook: null, landingBenefits: [] },
   ]);
 
   await db.insert(orders).values([
